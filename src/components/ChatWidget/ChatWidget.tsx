@@ -6,7 +6,7 @@ import { TypingIndicator } from "../TypingIndicator/TypingIndicator";
 import "./ChatWidget.css";
 
 export interface ChatWidgetProps {
-  /** Implementacion de ChatTransport a usar (mock en fase 1, agente real en fase 2). */
+  /** Implementacion de ChatTransport a usar (mock hoy, adaptador real mas adelante). */
   transport: ChatTransport;
   title?: string;
 }

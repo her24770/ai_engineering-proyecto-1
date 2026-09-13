@@ -14,11 +14,10 @@ const CANNED_RESPONSE =
   "Esto se reemplazara por una conexion real en la fase 2 del proyecto.";
 
 /**
- * Implementacion minima del contrato `ChatTransport` para el Proyecto 1.
- * Simula latencia de red y streaming de texto token a token. La persona
- * encargada del backend simulado puede extender esta clase (indicadores de
- * error, mensajes mas realistas, WebSocket real de por medio) sin tener que
- * tocar la UI, ya que todo pasa por la interfaz `ChatTransport`.
+ * Implementacion simulada del contrato `ChatTransport`. Emula latencia de
+ * red y streaming de texto token a token. Puede extenderse (indicadores de
+ * error, respuestas mas variadas, un WebSocket real de por medio) sin tocar
+ * la UI, ya que todo pasa por la interfaz `ChatTransport`.
  */
 export class MockTransport implements ChatTransport {
   private listeners = new Set<ChatTransportEventListener>();

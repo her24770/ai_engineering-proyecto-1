@@ -1,10 +1,9 @@
 import type { ChatTransportEventListener } from "../types";
 
 /**
- * Puerto (en el sentido de arquitectura hexagonal) que desacopla la UI del
- * origen real de los mensajes. En el Proyecto 1 la unica implementacion es
- * `MockTransport`; en el Proyecto 2 se agrega un adaptador que hable con el
- * agente real sin que `ChatWidget` ni `useChat` cambien.
+ * Puerto (arquitectura hexagonal) que desacopla la UI del origen real de
+ * los mensajes: los adaptadores concretos (mock, agente real) pueden
+ * intercambiarse sin que `ChatWidget` ni `useChat` cambien.
  */
 export interface ChatTransport {
   connect(): Promise<void>;

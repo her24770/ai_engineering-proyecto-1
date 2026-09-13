@@ -8,11 +8,8 @@ export interface MarkdownContentProps {
 
 /**
  * Render base de Markdown para mensajes de agente. Usa `rehype-sanitize`
- * porque el contenido viene de un agente (y en fase 2, de un LLM real), por
- * lo que nunca debe tratarse como HTML de confianza.
- *
- * Estilos, resaltado de sintaxis para bloques de codigo y theming quedan a
- * cargo de la persona encargada de renderizado de contenido.
+ * porque el contenido puede venir de un LLM real, por lo que nunca debe
+ * tratarse como HTML de confianza.
  */
 export function MarkdownContent({ content }: MarkdownContentProps) {
   return (
