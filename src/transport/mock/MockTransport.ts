@@ -1,5 +1,9 @@
 import type { ChatTransport } from "../ChatTransport";
-import type { ChatMessage, ChatTransportEvent, ChatTransportEventListener } from "../../types";
+import type {
+  ChatMessage,
+  ChatTransportEvent,
+  ChatTransportEventListener,
+} from "../../types";
 
 const CANNED_RESPONSE =
   "¡Hola! Soy un **agente simulado**. Todavia no estoy conectado a un modelo real, " +

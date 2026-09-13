@@ -12,7 +12,7 @@ Resuelvan el siguiente problema utilizando los conceptos vistos en clase. Este p
 
 Ustedes han sido contratados por la startup **AGIChat**, que actualmente está tratando de llamar la atención de nuevos inversionistas para lograr seguir existiendo. Su fundadora, Maxine Prompt, luego de haber despedido a su última diseñadora, les comenta que lo último que le dejó fue un wireframe que ilustra exactamente la experiencia de usuario que ella quería y que puede ser visto en el siguiente link, señalando que tiene completa libertad en escoger paleta de colores y estilos:
 
-**Wireframe** *(pendiente: agregar enlace)*
+**Wireframe** _(pendiente: agregar enlace)_
 
 La idea en general de Maxine es diseñar un widget de un chat que le permita añadir una interfaz agéntica fácilmente a sus futuros clientes; en otras palabras, brindarles un **Software Development Kit (SDK)**. Adicionalmente a esto, Maxine comenta que necesita que lo implementen lo antes posible con las siguientes condiciones:
 

@@ -35,14 +35,14 @@ flowchart TD
 
 ## Capas del código (`src/`)
 
-| Capa | Carpeta | Responsabilidad | Depende de |
-|------|---------|------------------|------------|
-| UI | `components/` | Presentación pura (React) | `state/`, `markdown/` |
-| Render de contenido | `markdown/` | Convertir Markdown del agente a HTML seguro (sanitizado) | — |
-| Estado | `state/` | Traducir eventos del transporte a estado de React (`useChat`) | `transport/` |
-| Transporte (puerto) | `transport/ChatTransport.ts` | Contrato que desacopla la UI del origen de datos | — |
-| Transporte (adaptador) | `transport/mock/` | Implementación simulada para el Proyecto 1 | `ChatTransport` |
-| Tipos | `types/` | Tipos compartidos entre todas las capas | — |
+| Capa                   | Carpeta                      | Responsabilidad                                               | Depende de            |
+| ---------------------- | ---------------------------- | ------------------------------------------------------------- | --------------------- |
+| UI                     | `components/`                | Presentación pura (React)                                     | `state/`, `markdown/` |
+| Render de contenido    | `markdown/`                  | Convertir Markdown del agente a HTML seguro (sanitizado)      | —                     |
+| Estado                 | `state/`                     | Traducir eventos del transporte a estado de React (`useChat`) | `transport/`          |
+| Transporte (puerto)    | `transport/ChatTransport.ts` | Contrato que desacopla la UI del origen de datos              | —                     |
+| Transporte (adaptador) | `transport/mock/`            | Implementación simulada para el Proyecto 1                    | `ChatTransport`       |
+| Tipos                  | `types/`                     | Tipos compartidos entre todas las capas                       | —                     |
 
 La regla que mantiene esto desacoplado: **nada en `components/` o `state/` importa `transport/mock` directamente**, salvo el punto de composición (`demo/`, o el consumidor final del SDK), que decide qué adaptador usar.
 
