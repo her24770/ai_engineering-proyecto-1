@@ -1,0 +1,23 @@
+.agichat-widget {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  height: 480px;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+.agichat-widget__header {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  background: #111827;
+  color: white;
+}
+
+.agichat-widget__error {
+  padding: 0 0.75rem 0.5rem;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
