@@ -28,7 +28,7 @@ export function InputBar({ onSend, disabled }: InputBarProps) {
         aria-label="Mensaje"
       />
       <button type="submit" disabled={disabled || !value.trim()}>
-        Enviar
+        →
       </button>
     </form>
   );
