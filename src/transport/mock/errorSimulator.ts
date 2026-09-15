@@ -7,11 +7,17 @@
 export type SimulatedErrorKind =
   "timeout" | "disconnect" | "rate_limit" | "invalid_input" | "server_error";
 
+/** Fallos que pueden inyectarse aleatoriamente durante una respuesta. */
+export type TransientErrorKind = Extract<
+  SimulatedErrorKind,
+  "timeout" | "disconnect" | "server_error"
+>;
+
 export interface ErrorSimulatorConfig {
   /** Probabilidad (0-1) de que una respuesta falle con un error transitorio. */
   failureRate: number;
   /** Subconjunto de errores transitorios que se pueden sortear aleatoriamente. */
-  enabledKinds: SimulatedErrorKind[];
+  enabledKinds: TransientErrorKind[];
   /** Longitud maxima permitida para un mensaje entrante. */
   maxMessageLength: number;
   /** Ventana de tiempo (ms) usada para el rate limiting. */
@@ -24,8 +30,8 @@ export interface ErrorSimulatorConfig {
  * Por defecto el mock es "confiable" (failureRate 0): un desarrollador que
  * construye la UI contra el mock no quiere fallos aleatorios en su flujo
  * normal ni tests intermitentes. Los fallos transitorios se activan a
- * proposito pasando `errorConfig` a `MockTransport` (ver demo/main.tsx),
- * mientras que la validacion de entrada y el rate limit si estan activos
+ * proposito pasando `errorConfig` a `MockTransport`, mientras que la
+ * validacion de entrada y el rate limit si estan activos
  * siempre porque son correctitud basica, no "caos" opcional.
  */
 export const DEFAULT_ERROR_SIMULATOR_CONFIG: ErrorSimulatorConfig = {
@@ -109,7 +115,7 @@ export class ErrorSimulator {
    * Decide si la respuesta actual debe fallar con un error transitorio y,
    * de ser asi, cual. Devuelve `null` cuando no hay fallo.
    */
-  maybeFail(): SimulatedErrorKind | null {
+  maybeFail(): TransientErrorKind | null {
     if (this.config.failureRate <= 0 || this.config.enabledKinds.length === 0) {
       return null;
     }

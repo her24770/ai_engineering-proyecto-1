@@ -1,4 +1,10 @@
 import type { ChatTransport } from "../ChatTransport";
+import {
+  generateResponse,
+  getRandomDelay,
+  getRandomChunkSize,
+  getRandomTypingDelay,
+} from "./ResponsesEngine";
 import type {
   ChatMessage,
   ChatTransportEvent,
@@ -9,14 +15,6 @@ import {
   getErrorMessage,
   type ErrorSimulatorConfig,
 } from "./errorSimulator";
-
-const CANNED_RESPONSE =
-  "¡Hola! Soy un **agente simulado**. Todavia no estoy conectado a un modelo real, " +
-  "pero ya puedo mostrar *Markdown*, por ejemplo:\n\n" +
-  "- listas\n" +
-  "- `codigo en linea`\n" +
-  "- **texto en negrita**\n\n" +
-  "Esto se reemplazara por una conexion real en la fase 2 del proyecto.";
 
 const TIMEOUT_DELAY_MS = 4000;
 
@@ -43,6 +41,7 @@ export interface MockTransportOptions {
 export class MockTransport implements ChatTransport {
   private listeners = new Set<ChatTransportEventListener>();
   private connected = false;
+  private connectionVersion = 0;
   private readonly errorSimulator: ErrorSimulator;
 
   constructor(options: MockTransportOptions = {}) {
@@ -51,11 +50,15 @@ export class MockTransport implements ChatTransport {
   }
 
   async connect(): Promise<void> {
-    this.connected = true;
+    if (!this.connected) {
+      this.connected = true;
+      this.connectionVersion += 1;
+    }
   }
 
   disconnect(): void {
     this.connected = false;
+    this.connectionVersion += 1;
     this.listeners.clear();
   }
 
@@ -68,6 +71,7 @@ export class MockTransport implements ChatTransport {
     if (!this.connected) {
       throw new Error("MockTransport: llama a connect() antes de sendMessage()");
     }
+    const connectionVersion = this.connectionVersion;
 
     const invalidKind = this.errorSimulator.validateInput(content);
     if (invalidKind) {
@@ -88,19 +92,26 @@ export class MockTransport implements ChatTransport {
       status: "sent",
     };
     this.emit({ type: "message", message: userMessage });
+    if (!this.isConnectionActive(connectionVersion)) return;
+
     this.emit({ type: "typing", isTyping: true });
+    if (!this.isConnectionActive(connectionVersion)) return;
 
     const failureKind = this.errorSimulator.maybeFail();
 
     if (failureKind === "timeout") {
       await delay(TIMEOUT_DELAY_MS);
+      if (!this.isConnectionActive(connectionVersion)) return;
+
       this.emit({ type: "typing", isTyping: false });
       this.emit({ type: "error", error: getErrorMessage("timeout") });
       return;
     }
 
-    await delay(500);
+    await delay(getRandomDelay());
+    if (!this.isConnectionActive(connectionVersion)) return;
 
+    const response = generateResponse(content);
     const agentMessageId = createId();
     this.emit({
       type: "message",
@@ -112,6 +123,7 @@ export class MockTransport implements ChatTransport {
         status: "sending",
       },
     });
+    if (!this.isConnectionActive(connectionVersion)) return;
 
     if (failureKind === "server_error") {
       this.emit({ type: "typing", isTyping: false });
@@ -122,14 +134,30 @@ export class MockTransport implements ChatTransport {
 
     const interruptAt =
       failureKind === "disconnect"
-        ? this.errorSimulator.pickInterruptPoint(CANNED_RESPONSE.length)
+        ? this.errorSimulator.pickInterruptPoint(response.length)
         : null;
 
-    await this.streamResponse(agentMessageId, CANNED_RESPONSE, interruptAt);
+    const chunkSize = getRandomChunkSize();
+    const typingDelay = getRandomTypingDelay();
+
+    const completedCurrentOperation = await this.streamResponse(
+      agentMessageId,
+      response,
+      chunkSize,
+      typingDelay,
+      interruptAt,
+      connectionVersion,
+    );
+    if (!completedCurrentOperation) return;
 
     this.emit({ type: "typing", isTyping: false });
+    if (!this.isConnectionActive(connectionVersion)) return;
 
     if (interruptAt !== null) {
+      // Conservamos los listeners para poder informar el fallo y permitir que
+      // el consumidor se reconecte sin tener que volver a suscribirse.
+      this.connected = false;
+      this.connectionVersion += 1;
       this.emit({ type: "error", error: getErrorMessage("disconnect") });
       this.emit({ type: "message-complete", id: agentMessageId, status: "error" });
       return;
@@ -141,18 +169,28 @@ export class MockTransport implements ChatTransport {
   private async streamResponse(
     id: string,
     text: string,
+    chunkSize: number,
+    typingDelay: number,
     interruptAt: number | null,
-  ): Promise<void> {
-    const chunkSize = 4;
+    connectionVersion: number,
+  ): Promise<boolean> {
     const limit = interruptAt ?? text.length;
     for (let i = 0; i < limit; i += chunkSize) {
-      await delay(20);
+      await delay(typingDelay);
+      if (!this.isConnectionActive(connectionVersion)) return false;
+
       this.emit({
         type: "message-chunk",
         id,
         delta: text.slice(i, Math.min(i + chunkSize, limit)),
       });
+      if (!this.isConnectionActive(connectionVersion)) return false;
     }
+    return this.isConnectionActive(connectionVersion);
+  }
+
+  private isConnectionActive(connectionVersion: number): boolean {
+    return this.connected && this.connectionVersion === connectionVersion;
   }
 
   private emit(event: ChatTransportEvent): void {

@@ -104,6 +104,22 @@ describe("MockTransport", () => {
       expect(types).not.toContain("message-chunk");
     });
 
+    it("permite configurar la tasa de fallo desde las opciones publicas", async () => {
+      const transport = new MockTransport({
+        errorConfig: { failureRate: 1, enabledKinds: ["server_error"] },
+      });
+      const events: ChatTransportEvent[] = [];
+      transport.onEvent((event) => events.push(event));
+      await transport.connect();
+
+      await transport.sendMessage("hola");
+
+      expect(events.some((event) => event.type === "error")).toBe(true);
+      expect(events).toContainEqual(
+        expect.objectContaining({ type: "message-complete", status: "error" }),
+      );
+    });
+
     it("simula un error de servidor tras crear el mensaje del agente, marcandolo como error", async () => {
       const { transport, events } = await connectedTransport(
         new ErrorSimulator({ failureRate: 1, enabledKinds: ["server_error"] }, () => 0),
@@ -129,6 +145,53 @@ describe("MockTransport", () => {
       expect(chunkEvents.length).toBeGreaterThan(0);
       expect(completeEvent).toMatchObject({ type: "message-complete", status: "error" });
       expect(events.some((event) => event.type === "error")).toBe(true);
+    });
+
+    it("exige reconectar despues de una desconexion simulada", async () => {
+      const { transport, events } = await connectedTransport(
+        new ErrorSimulator({ failureRate: 1, enabledKinds: ["disconnect"] }, () => 0),
+      );
+
+      await transport.sendMessage("hola");
+
+      await expect(transport.sendMessage("otro mensaje")).rejects.toThrow(/connect/);
+      await transport.connect();
+      await expect(transport.sendMessage("otro mensaje")).resolves.toBeUndefined();
+
+      const userMessages = events.filter(
+        (event) => event.type === "message" && event.message.role === "user",
+      );
+      expect(userMessages).toHaveLength(2);
+    });
+
+    it("cancela una respuesta anterior aunque se reconecte antes de que termine", async () => {
+      const transport = new MockTransport({
+        errorSimulator: new ErrorSimulator(
+          { failureRate: 1, enabledKinds: ["timeout"] },
+          () => 0,
+        ),
+      });
+      const oldEvents: ChatTransportEvent[] = [];
+      const newEvents: ChatTransportEvent[] = [];
+      transport.onEvent((event) => oldEvents.push(event));
+      await transport.connect();
+
+      const pendingResponse = transport.sendMessage("hola");
+      transport.disconnect();
+      transport.onEvent((event) => newEvents.push(event));
+      await transport.connect();
+      await pendingResponse;
+
+      expect(oldEvents.map((event) => event.type)).toEqual(["message", "typing"]);
+      expect(newEvents).toHaveLength(0);
+    });
+
+    it("rechaza nuevos mensajes despues de disconnect", async () => {
+      const transport = new MockTransport();
+      await transport.connect();
+      transport.disconnect();
+
+      await expect(transport.sendMessage("hola")).rejects.toThrow(/connect/);
     });
 
     it("por defecto (failureRate 0) nunca inyecta fallos transitorios", async () => {

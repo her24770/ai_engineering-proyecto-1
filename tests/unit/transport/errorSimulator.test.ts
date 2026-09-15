@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ErrorSimulator,
   getErrorMessage,
+  type TransientErrorKind,
 } from "../../../src/transport/mock/errorSimulator";
 
 describe("ErrorSimulator", () => {
@@ -138,3 +139,12 @@ describe("getErrorMessage", () => {
     }
   });
 });
+
+// Verificacion de compilacion: los fallos aleatorios solo pueden ser
+// transitorios; rate_limit e invalid_input se activan por sus propias reglas.
+const transientKinds: TransientErrorKind[] = [
+  "timeout",
+  "disconnect",
+  "server_error",
+];
+void transientKinds;
