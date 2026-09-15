@@ -3,6 +3,12 @@ export interface ResponseGroup {
     responses: string[];
 }
 
+export const fallbackResponses: string[] = [
+    "No tengo una respuesta específica para eso todavía. ¿Puedes darme un poco más de contexto?",
+    "Interesante. No encontré una categoría relacionada, pero puedo seguir conversando contigo.",
+    "No estoy seguro de cómo responder a eso. Puedes preguntarme sobre **funciones**, **código**, **planes** o **documentación**.",
+];
+
 export const responseGroups: ResponseGroup[] = [
     {
         keywords: ["hola", "buenas", "hey", "saludos"],

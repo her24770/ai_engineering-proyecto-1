@@ -1,5 +1,10 @@
 import type { ChatTransport } from "../ChatTransport";
-import { generateResponse } from "./ResponsesEngine";
+import {
+  generateResponse,
+  getRandomDelay,
+  getRandomChunkSize,
+  getRandomTypingDelay,
+} from "./ResponsesEngine";
 import type {
   ChatMessage,
   ChatTransportEvent,
@@ -40,6 +45,8 @@ export class MockTransport implements ChatTransport {
 
   async sendMessage(content: string): Promise<void> {
     const response = generateResponse(content);
+
+
     if (!this.connected) {
       throw new Error("MockTransport: llama a connect() antes de sendMessage()");
     }
@@ -54,7 +61,10 @@ export class MockTransport implements ChatTransport {
     this.emit({ type: "message", message: userMessage });
     this.emit({ type: "typing", isTyping: true });
 
-    await delay(500);
+
+
+    // await delay(500);
+    await delay(getRandomDelay());
 
     const agentMessageId = createId();
     this.emit({
@@ -68,16 +78,19 @@ export class MockTransport implements ChatTransport {
       },
     });
 
-    await this.streamResponse(agentMessageId, response);
+    const chunkSize = getRandomChunkSize();
+    const typingDelay = getRandomTypingDelay();
+
+    await this.streamResponse(agentMessageId, response, chunkSize, typingDelay,);
 
     this.emit({ type: "typing", isTyping: false });
     this.emit({ type: "message-complete", id: agentMessageId });
   }
 
-  private async streamResponse(id: string, text: string): Promise<void> {
-    const chunkSize = 4;
+  private async streamResponse(id: string, text: string, chunkSize: number, typingDelay: number): Promise<void> {
     for (let i = 0; i < text.length; i += chunkSize) {
-      await delay(20);
+      // await delay(20);
+      await delay(typingDelay);
       this.emit({ type: "message-chunk", id, delta: text.slice(i, i + chunkSize) });
     }
   }
