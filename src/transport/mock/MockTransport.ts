@@ -1,17 +1,18 @@
 import type { ChatTransport } from "../ChatTransport";
+import { generateResponse } from "./ResponsesEngine";
 import type {
   ChatMessage,
   ChatTransportEvent,
   ChatTransportEventListener,
 } from "../../types";
 
-const CANNED_RESPONSE =
-  "¡Hola! Soy un **agente simulado**. Todavia no estoy conectado a un modelo real, " +
-  "pero ya puedo mostrar *Markdown*, por ejemplo:\n\n" +
-  "- listas\n" +
-  "- `codigo en linea`\n" +
-  "- **texto en negrita**\n\n" +
-  "Esto se reemplazara por una conexion real en la fase 2 del proyecto.";
+// const CANNED_RESPONSE =
+//   "¡Hola! Soy un **agente simulado**. Todavia no estoy conectado a un modelo real, " +
+//   "pero ya puedo mostrar *Markdown*, por ejemplo:\n\n" +
+//   "- listas\n" +
+//   "- `codigo en linea`\n" +
+//   "- **texto en negrita**\n\n" +
+//   "Esto se reemplazara por una conexion real en la fase 2 del proyecto.";
 
 /**
  * Implementacion simulada del contrato `ChatTransport`. Emula latencia de
@@ -38,6 +39,7 @@ export class MockTransport implements ChatTransport {
   }
 
   async sendMessage(content: string): Promise<void> {
+    const response = generateResponse(content);
     if (!this.connected) {
       throw new Error("MockTransport: llama a connect() antes de sendMessage()");
     }
@@ -66,7 +68,7 @@ export class MockTransport implements ChatTransport {
       },
     });
 
-    await this.streamResponse(agentMessageId, CANNED_RESPONSE);
+    await this.streamResponse(agentMessageId, response);
 
     this.emit({ type: "typing", isTyping: false });
     this.emit({ type: "message-complete", id: agentMessageId });
