@@ -13,7 +13,7 @@ export interface ChatMessage {
 export type ChatTransportEvent =
   | { type: "message"; message: ChatMessage }
   | { type: "message-chunk"; id: string; delta: string }
-  | { type: "message-complete"; id: string }
+  | { type: "message-complete"; id: string; status?: MessageStatus }
   | { type: "typing"; isTyping: boolean }
   | { type: "error"; error: string };
 

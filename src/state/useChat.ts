@@ -41,7 +41,9 @@ export function useChat(transport: ChatTransport): UseChatResult {
         case "message-complete":
           setMessages((prev) =>
             prev.map((message) =>
-              message.id === event.id ? { ...message, status: "sent" } : message,
+              message.id === event.id
+                ? { ...message, status: event.status ?? "sent" }
+                : message,
             ),
           );
           break;
