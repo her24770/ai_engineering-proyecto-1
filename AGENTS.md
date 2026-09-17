@@ -2,7 +2,7 @@
 
 ## Contexto del proyecto
 
-`@agichat/widget` es un SDK de widget de chat construido con React, TypeScript y Vite. Actualmente usa un transporte simulado (`MockTransport`). La arquitectura está diseñada para incorporar un agente real en el Proyecto 2 implementando la interfaz `ChatTransport`, sin modificar los componentes ni los hooks existentes.
+`agichat` es un SDK de widget de chat construido con React, TypeScript y Vite. Actualmente usa un transporte simulado (`MockTransport`). La arquitectura está diseñada para incorporar un agente real en el Proyecto 2 implementando la interfaz `ChatTransport`, sin modificar los componentes ni los hooks existentes.
 
 ## Documentación de referencia
 
@@ -34,7 +34,7 @@ El pipeline de CI ejecuta `typecheck → lint → test:coverage → build` en ca
 - No agregar dependencias ni cambiar la API pública (`src/index.ts`) sin justificarlo en el PR.
 - Agregar o actualizar pruebas cuando cambie el comportamiento.
 - Mantener la cobertura por encima del 80 % en líneas, funciones, ramas y sentencias.
-- Antes de finalizar, ejecutar `lint`, `typecheck` y `test:coverage` sin errores.
+- Antes de finalizar, ejecutar `lint`, `typecheck` y `test:coverage` y `build` sin errores.
 
 ## Flujo de trabajo
 
