@@ -1,10 +1,22 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeHighlight from "rehype-highlight";
+import "./MarkdownContent.css";
 
 export interface MarkdownContentProps {
   content: string;
 }
+
+// Permite className en <span> el schema lo omite y se borra
+// las clases hljs-* que agrega rehype-highlight al sanitizar
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [...(defaultSchema.attributes?.span ?? []), "className"],
+  },
+};
 
 /**
  * Render base de Markdown para mensajes de agente. Usa `rehype-sanitize`
@@ -13,8 +25,13 @@ export interface MarkdownContentProps {
  */
 export function MarkdownContent({ content }: MarkdownContentProps) {
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-      {content}
-    </ReactMarkdown>
+    <div className="agichat-markdown">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeHighlight, [rehypeSanitize, sanitizeSchema]]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }

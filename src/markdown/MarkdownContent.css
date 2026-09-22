@@ -1,0 +1,209 @@
+.agichat-markdown {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.agichat-markdown > :first-child {
+  margin-top: 0;
+}
+
+.agichat-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.agichat-markdown p,
+.agichat-markdown ul,
+.agichat-markdown ol,
+.agichat-markdown blockquote,
+.agichat-markdown pre,
+.agichat-markdown table,
+.agichat-markdown h1,
+.agichat-markdown h2,
+.agichat-markdown h3,
+.agichat-markdown h4 {
+  margin: 0.5em 0;
+}
+
+.agichat-markdown h1,
+.agichat-markdown h2,
+.agichat-markdown h3,
+.agichat-markdown h4 {
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--agichat-color-secondary, #14142b);
+}
+
+.agichat-markdown h1 {
+  font-size: 1.15rem;
+}
+
+.agichat-markdown h2 {
+  font-size: 1.05rem;
+}
+
+.agichat-markdown h3,
+.agichat-markdown h4 {
+  font-size: 0.95rem;
+}
+
+.agichat-markdown ul,
+.agichat-markdown ol {
+  padding-left: 1.25rem;
+}
+
+.agichat-markdown li + li {
+  margin-top: 0.15em;
+}
+
+.agichat-markdown a {
+  color: var(--agichat-color-primary, #4250a0);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.agichat-markdown strong {
+  font-weight: 700;
+}
+
+.agichat-markdown blockquote {
+  padding: 0.1em 0.75rem;
+  border-left: 3px solid var(--agichat-color-terciary, #6c7ac9);
+  color: var(--agichat-color-secondary, #14142b);
+  opacity: 0.85;
+}
+
+.agichat-markdown hr {
+  border: none;
+  border-top: 1px solid var(--agichat-color-terciary, #6c7ac9);
+  opacity: 0.4;
+  margin: 0.75em 0;
+}
+
+.agichat-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.agichat-markdown th,
+.agichat-markdown td {
+  border: 1px solid var(--agichat-color-terciary, #6c7ac9);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+
+.agichat-markdown th {
+  background: color-mix(in srgb, var(--agichat-color-terciary, #6c7ac9) 15%, transparent);
+  font-weight: 700;
+}
+
+/* Codigo en linea */
+.agichat-markdown :not(pre) > code {
+  background: color-mix(in srgb, var(--agichat-color-secondary, #14142b) 8%, transparent);
+  color: var(--agichat-color-secondary, #14142b);
+  border-radius: 0.3rem;
+  padding: 0.15em 0.4em;
+  font-size: 0.85em;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Bloques de codigo resaltados por rehype-highlight */
+.agichat-markdown pre {
+  background: var(--agichat-color-secondary, #14142b);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.agichat-markdown pre code {
+  background: transparent;
+  padding: 0;
+  color: #e6e6f7;
+  font-size: 0.82em;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Tema de resaltado de sintaxis derivado de la paleta del widget */
+.agichat-markdown .hljs-comment,
+.agichat-markdown .hljs-quote {
+  color: #7b7fb0;
+  font-style: italic;
+}
+
+.agichat-markdown .hljs-keyword,
+.agichat-markdown .hljs-selector-tag,
+.agichat-markdown .hljs-operator {
+  color: #8aa0f5;
+}
+
+.agichat-markdown .hljs-tag,
+.agichat-markdown .hljs-name {
+  color: #79c7f2;
+}
+
+.agichat-markdown .hljs-string,
+.agichat-markdown .hljs-regexp,
+.agichat-markdown .hljs-template-tag,
+.agichat-markdown .hljs-meta-string {
+  color: #f2c078;
+}
+
+.agichat-markdown .hljs-attr,
+.agichat-markdown .hljs-attribute,
+.agichat-markdown .hljs-property {
+  color: #79c7f2;
+}
+
+.agichat-markdown .hljs-number,
+.agichat-markdown .hljs-literal {
+  color: #f28fad;
+}
+
+.agichat-markdown .hljs-built_in,
+.agichat-markdown .hljs-type,
+.agichat-markdown .hljs-class .hljs-title {
+  color: #5fd3c4;
+}
+
+.agichat-markdown .hljs-title,
+.agichat-markdown .hljs-title.function_,
+.agichat-markdown .hljs-section {
+  color: #c9a4f2;
+  font-weight: 700;
+}
+
+.agichat-markdown .hljs-symbol,
+.agichat-markdown .hljs-bullet,
+.agichat-markdown .hljs-link {
+  color: #f2789a;
+}
+
+.agichat-markdown .hljs-meta,
+.agichat-markdown .hljs-meta .hljs-keyword,
+.agichat-markdown .hljs-doctag {
+  color: #7fd7c4;
+}
+
+.agichat-markdown .hljs-variable,
+.agichat-markdown .hljs-params,
+.agichat-markdown .hljs-punctuation {
+  color: #e6e6f7;
+}
+
+.agichat-markdown .hljs-emphasis {
+  font-style: italic;
+}
+
+.agichat-markdown .hljs-strong {
+  font-weight: 700;
+}
+
+.agichat-markdown .hljs-deletion {
+  color: #e2777a;
+}
+
+.agichat-markdown .hljs-addition {
+  color: #8fd19e;
+}

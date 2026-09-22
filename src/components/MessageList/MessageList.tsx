@@ -1,5 +1,6 @@
 import type { ChatMessage } from "../../types";
 import { MessageBubble } from "../MessageBubble/MessageBubble";
+import { EmptyState } from "../EmptyState";
 import "./MessageList.css";
 import { useEffect, useRef } from "react";
 
@@ -16,6 +17,10 @@ export function MessageList({ messages }: MessageListProps) {
       behavior: "smooth",
     });
   }, [messages]);
+
+  if (messages.length === 0) {
+    return <EmptyState />;
+  }
 
   return (
     <div

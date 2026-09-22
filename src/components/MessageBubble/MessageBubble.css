@@ -1,18 +1,24 @@
-/* Estilos base; pendiente aplicar la paleta final del wireframe. */
 .agichat-bubble {
   max-width: 80%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.75rem;
+  padding: 0.01rem 0.7rem;
+  border-radius: 999px;
   margin: 0.25rem 0;
   word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .agichat-bubble--user {
   align-self: flex-end;
-  background: #e5e7eb;
+  background: var(--agichat-color-bg, #ffffff);
+  border: 1px solid var(--agichat-color-primary, #111827);
+  color: var(--agichat-color-secondary);
 }
 
 .agichat-bubble--agent {
   align-self: flex-start;
-  background: #f3f4f6;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--agichat-color-secondary, #14142b);
+  padding-left: 0.25rem;
 }
