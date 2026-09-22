@@ -1,18 +1,25 @@
 .agichat-widget {
+  --agichat-color-bg: #ffffff;
+  --agichat-color-primary: #4250a0;
+  --agichat-color-secondary: #14142b;
+  --agichat-color-terciary: #6c7ac9;
+
   display: flex;
   flex-direction: column;
   width: 320px;
   height: 480px;
   border-radius: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 2px solid var(--agichat-color-primary);
+  background: var(--agichat-color-bg);
   overflow: hidden;
   font-family: system-ui, sans-serif;
+  color: var(--agichat-color-secondary);
 }
 
 .agichat-widget__header {
   padding: 0.75rem 1rem;
-  font-weight: 600;
-  background: #111827;
+  font-weight: 700;
+  background: var(--agichat-color-terciary);
   color: white;
 }
 

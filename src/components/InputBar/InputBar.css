@@ -9,7 +9,14 @@
   flex: 1;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--agichat-color-primary);
+}
+
+.agichat-input-bar input:focus-visible {
+  outline: 2px solid var(--agichat-color-primary);
+  outline-offset: 1px;
+  border-color: var(--agichat-color-bg);
+
 }
 
 .agichat-input-bar button {
@@ -17,6 +24,8 @@
   border-radius: 0.5rem;
   border: none;
   cursor: pointer;
+  background-color: var(--agichat-color-secondary);
+  color: var(--agichat-color-bg);
 }
 
 .agichat-input-bar button:disabled {
