@@ -1,34 +1,59 @@
 import {
-  fallbackResponses,
-  responseGroups,
-  type ResponseGroup,
+    responseGroups,
+    fallbackResponses,
 } from "./ResponseBank";
 
-export function findResponseGroup(message: string): ResponseGroup | undefined {
-  const normalizedMessage = message.toLowerCase();
-  return responseGroups.find((group) =>
-    group.keywords.some((keyword) => normalizedMessage.includes(keyword)),
-  );
+import type { ResponseGroup } from "./ResponseBank";
+
+export function findResponseGroup(message: string) {
+    const normalizedMessage = message.toLowerCase();
+
+    return responseGroups.find((group: ResponseGroup) =>
+        group.keywords.some((keyword: string) =>
+            normalizedMessage.includes(keyword.toLowerCase())
+        )
+    );
+}
+
+function getRandomResponse(responses: string[]): string {
+    const randomIndex = Math.floor(Math.random() * responses.length);
+
+    return responses[randomIndex];
 }
 
 export function generateResponse(message: string): string {
-  const group = findResponseGroup(message);
-  const responses = group?.responses ?? fallbackResponses;
-  return responses[Math.floor(Math.random() * responses.length)];
+    const group = findResponseGroup(message);
+
+    if (!group) {
+        return getRandomResponse(fallbackResponses);
+    }
+
+    return getRandomResponse(group.responses);
 }
 
 export function getRandomChunkSize(): number {
-  return randomBetween(2, 6);
+    const minChunkSize = 2;
+    const maxChunkSize = 6;
+
+    return Math.floor(
+        Math.random() * (maxChunkSize - minChunkSize + 1)
+    ) + minChunkSize;
 }
 
 export function getRandomTypingDelay(): number {
-  return randomBetween(15, 40);
+    const minTypingDelay = 15;
+    const maxTypingDelay = 40;
+
+    return Math.floor(
+        Math.random() * (maxTypingDelay - minTypingDelay + 1)
+    ) + minTypingDelay;
 }
 
 export function getRandomDelay(): number {
-  return randomBetween(400, 1200);
-}
+    const minDelay = 400;
+    const maxDelay = 1200;
 
-function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(
+        Math.random() * (maxDelay - minDelay + 1)
+    ) + minDelay;
 }
