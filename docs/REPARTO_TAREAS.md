@@ -6,7 +6,7 @@ Somos 6. Cada quien lleva un frente, pero **todos deben poder explicar el sistem
 
 ## Reglas del equipo
 
-- **Flujo:** rama corta desde `develop` → PR hacia `develop` → CI en verde → merge. `develop` pasa a `main` por PR al entregar.
+- **Flujo (Github Flow):** rama corta desde `main` → PR hacia `main` → CI en verde → revisión → merge. No se integra directo a `main`.
 - Commits pequeños, con mensajes descriptivos (Conventional Commits, en español).
 - Cobertura mayor a 80 % (líneas, funciones, ramas y sentencias). CI en verde.
 - Antes del PR: `npm run lint`, `npm run typecheck`, `npm run test:coverage` y `npm run build`.
@@ -82,7 +82,7 @@ Entrega primero (desbloquea al resto):
 - Documentación para la presentación y justificación de decisiones.
 
 ### Infraestructura — ya hecha (Persona de infra)
-Servidor, Docker, nginx, dominio `agichat.jhgo.online`, CI, backend base (`/health`, CORS, rate limit), diagrama de alto nivel y guía en `docs/INFRAESTRUCTURA.md`. Pendiente: deploy manual desde `develop` y cargar las API keys en el servidor.
+Servidor, Docker, nginx, dominio `agichat.jhgo.online`, CI, backend base (`/health`, CORS, rate limit), diagrama de alto nivel y guía en `docs/INFRAESTRUCTURA.md`. Pendiente: deploy manual desde `main` y cargar las API keys en el servidor.
 
 ## Keys: quién las consigue
 

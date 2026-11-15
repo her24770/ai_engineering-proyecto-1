@@ -6,7 +6,7 @@ Responsable: encargado de infraestructura. El resto del equipo **no necesita acc
 
 ```mermaid
 flowchart LR
-    Dev["Equipo<br/>(PR a develop)"] --> CI["GitHub Actions: CI<br/>typecheck · lint · test · build · docker build"]
+    Dev["Equipo<br/>(PR a main)"] --> CI["GitHub Actions: CI<br/>typecheck · lint · test · build · docker build"]
     Infra["Infraestructura<br/>(deploy manual: git pull + compose up)"] --> VPS
 
     Browser["Navegador / widget"] -->|HTTPS| CF["Cloudflare<br/>agichat.jhgo.online"]
@@ -66,7 +66,7 @@ No hay deploy automático. Lo hace el encargado de infraestructura, en el servid
 
 ```bash
 cd /home/nandez/projects/ia/agichat
-git pull origin develop            # (pendiente: hoy la carpeta se copió con rsync, no es un clon)
+git pull origin main               # (pendiente: hoy la carpeta se copió con rsync, no es un clon)
 docker compose up -d --build
 docker ps --filter name=agichat    # agichat_server debe salir "healthy"
 curl https://agichat.jhgo.online/health
@@ -80,9 +80,8 @@ Pendientes de infraestructura:
 
 ## Flujo del equipo
 
-- Rama corta desde `develop` → PR hacia `develop` → CI → merge.
-- `develop` pasa a `main` por PR cuando hay una versión estable (entrega).
-- El CI corre en PRs y pushes hacia `develop` y `main`.
+- Github Flow: rama corta desde `main` → PR hacia `main` → CI → revisión → merge.
+- El CI corre en PRs y pushes hacia `main`.
 
 ## Reglas para quienes escriben código de servidor
 
