@@ -4,3 +4,8 @@ coverage
 .DS_Store
 *.local
 *.log
+
+# Secretos
+.env
+.env.*
+!.env.example

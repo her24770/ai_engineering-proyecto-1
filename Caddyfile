@@ -1,0 +1,31 @@
+# Caddy solo sirve el widget estatico dentro del contenedor (puerto 80 interno).
+# El TLS lo manejan Cloudflare + nginx del host, por eso SITE_ADDRESS es ":80".
+#
+# El bloque /api/ solo se usa en local (docker compose up) para tener un unico
+# origen. En produccion nginx envia /api/ directo al backend (ver infra/nginx/).
+{$SITE_ADDRESS::80} {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /api/* {
+		# flush_interval -1: el streaming (SSE) no se bufferea
+		reverse_proxy server:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle /health {
+		reverse_proxy server:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
