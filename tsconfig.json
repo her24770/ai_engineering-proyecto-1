@@ -12,10 +12,11 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "erasableSyntaxOnly": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["src", "demo", "tests", "vite.config.ts"]
+  "include": ["src", "server", "demo", "tests", "vite.config.ts"]
 }

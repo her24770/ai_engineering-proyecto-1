@@ -1,0 +1,35 @@
+# Servidor de produccion (esquema de puertos del servidor: bloque 3230/3231):
+#   host nginx :443 -> 127.0.0.1:3230 (web)   /  127.0.0.1:3231 (server, via /api)
+# Produccion:  IMAGE_REPO=ghcr.io/<owner>/<repo> docker compose pull && docker compose up -d
+# Local:       docker compose up --build   -> http://localhost:3230
+services:
+  server:
+    image: ${IMAGE_REPO:-agichat}/server:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      target: server
+    container_name: agichat_server
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3231:3000"
+    networks:
+      - agichat_net
+
+  web:
+    image: ${IMAGE_REPO:-agichat}/web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      target: web
+    container_name: agichat_web
+    environment:
+      SITE_ADDRESS: ":80"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3230:80"
+    networks:
+      - agichat_net
+
+networks:
+  agichat_net:
+    driver: bridge
