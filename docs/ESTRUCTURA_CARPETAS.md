@@ -11,6 +11,14 @@ ai_engineering-proyecto-1/
 ├── .github/              # CI y plantilla de PR
 ├── demo/                 # Punto de composición para desarrollo local
 ├── docs/                 # Documentación técnica del equipo
+├── evals/                # Evaluaciones funcionales y de seguridad (LLM01, LLM07)
+├── infra/                # Configuración de despliegue (nginx, etc.)
+├── server/
+│   ├── src/              # Backend Node (app, endpoints, rate limiter, config)
+│   └── mcp/              # Servidores y contratos MCP
+│       ├── contracts.ts  # Contratos tipados compartidos de las herramientas MCP
+│       ├── tmdb/         # Servidor MCP para The Movie Database
+│       └── books/        # Servidor MCP para Google Books
 ├── src/
 │   ├── index.ts          # Superficie pública del SDK (re-exportaciones)
 │   ├── components/       # Componentes React de presentación
@@ -18,10 +26,11 @@ ai_engineering-proyecto-1/
 │   ├── state/            # Hooks y lógica de estado
 │   ├── transport/
 │   │   ├── ChatTransport.ts   # Puerto (interfaz pública)
-│   │   └── mock/              # Adaptador simulado (Proyecto 1)
+│   │   ├── mock/              # Adaptador simulado (Proyecto 1)
+│   │   └── agent/             # Adaptador real hacia /api/chat (Proyecto 2)
 │   └── types/            # Tipos compartidos entre capas
 ├── tests/
-│   └── unit/             # Pruebas unitarias (espeja la estructura de src/)
+│   └── unit/             # Pruebas unitarias (espeja la estructura de src/ y server/)
 ├── README.md             # Documentación para usuarios externos del SDK
 ├── AGENTS.md             # Guía de implementación de agentes
 ├── package.json
@@ -32,17 +41,21 @@ ai_engineering-proyecto-1/
 
 ## Responsabilidades
 
-| Carpeta | Responsabilidad |
-|---|---|
-| `.github/` | Pipeline de CI (lint, typecheck, pruebas) y plantilla de PR. |
-| `demo/` | Monta el widget con un adaptador concreto para desarrollo y demostración local. |
-| `docs/` | Documentación técnica del proyecto. `README.md` en la raíz cubre a usuarios externos del SDK. |
-| `src/components/` | Componentes React de presentación pura. Reciben datos y callbacks como props; no conocen adaptadores concretos. |
-| `src/markdown/` | Conversión de Markdown a HTML seguro (`react-markdown` + `rehype-sanitize`). |
-| `src/state/` | Hooks que traducen eventos del transporte a estado React. Conocen `ChatTransport` pero no sus implementaciones concretas. |
-| `src/transport/` | Contiene el puerto (`ChatTransport.ts`) y todos los adaptadores en subcarpetas propias. |
-| `src/types/` | Tipos de dominio compartidos. No importa de ninguna otra capa. |
-| `tests/unit/` | Pruebas unitarias organizadas en subcarpetas que reflejan las de `src/`. |
+| Carpeta           | Responsabilidad                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `.github/`        | Pipeline de CI (lint, typecheck, pruebas, docker build) y plantilla de PR.                                                |
+| `demo/`           | Monta el widget con un adaptador concreto para desarrollo y demostración local.                                           |
+| `docs/`           | Documentación técnica del proyecto. `README.md` en la raíz cubre a usuarios externos del SDK.                             |
+| `evals/`          | Evaluaciones de calidad del agente y pruebas de seguridad contra ataques LLM01 y LLM07.                                   |
+| `infra/`          | Configuración de infraestructura (nginx, compose, etc.) para el despliegue.                                               |
+| `server/src/`     | Backend Node: servidor HTTP, endpoints (`/health`, `/api/chat`), rate limiting y configuración.                           |
+| `server/mcp/`     | Servidores MCP independientes (`tmdb/`, `books/`) y contratos compartidos (`contracts.ts`).                               |
+| `src/components/` | Componentes React de presentación pura. Reciben datos y callbacks como props; no conocen adaptadores concretos.           |
+| `src/markdown/`   | Conversión de Markdown a HTML seguro (`react-markdown` + `rehype-sanitize`).                                              |
+| `src/state/`      | Hooks que traducen eventos del transporte a estado React. Conocen `ChatTransport` pero no sus implementaciones concretas. |
+| `src/transport/`  | Contiene el puerto (`ChatTransport.ts`) y todos los adaptadores en subcarpetas propias (`mock/`, `agent/`).               |
+| `src/types/`      | Tipos de dominio compartidos del SDK. No importa de ninguna otra capa.                                                    |
+| `tests/unit/`     | Pruebas unitarias organizadas en subcarpetas que reflejan las de `src/` y `server/`.                                      |
 
 ---
 
@@ -60,6 +73,18 @@ Hooks que gestionan estado derivado del transporte o de la interacción del usua
 
 - `ChatTransport.ts` permanece en la raíz de `transport/`; es la interfaz, no una implementación.
 - Cada adaptador concreto vive en su propia subcarpeta: `mock/`, `agent/`, etc.
+
+### Servidor y endpoints → `server/src/`
+
+Servidor HTTP Node, configuración (`config.ts`), rate limiter y registro de endpoints de API (ej. `/api/chat`). Se ejecuta directamente con Node sin compilación previa (solo sintaxis borrable).
+
+### Servidores y herramientas MCP → `server/mcp/<nombre>/`
+
+Cada servidor MCP vive en su subcarpeta (`tmdb/`, `books/`). El archivo `contracts.ts` en la raíz de `server/mcp/` contiene los contratos tipados compartidos entre los servidores MCP y el agente.
+
+### Evaluaciones y seguridad → `evals/`
+
+Pruebas funcionales de los flujos del agente y baterías de ataque adversarial para OWASP LLM01 y LLM07.
 
 ### Tipos compartidos → `src/types/`
 

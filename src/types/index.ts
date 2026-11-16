@@ -8,6 +8,7 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
   status?: MessageStatus;
+  posterUrl?: string;
 }
 
 export type ChatTransportEvent =
@@ -15,6 +16,7 @@ export type ChatTransportEvent =
   | { type: "message-chunk"; id: string; delta: string }
   | { type: "message-complete"; id: string; status?: MessageStatus }
   | { type: "typing"; isTyping: boolean }
+  | { type: "open-url"; url: string }
   | { type: "error"; error: string };
 
 export type ChatTransportEventListener = (event: ChatTransportEvent) => void;

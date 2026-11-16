@@ -20,32 +20,48 @@ flowchart TD
         Host["Página del cliente"] -->|embebe| Widget
     end
 
-    subgraph SDK["SDK AGIChat (este repositorio)"]
-        Widget["ChatWidget (UI)"] --> Hook["useChat (estado)"]
+    subgraph SDK["SDK AGIChat (Frontend / UI)"]
+        Widget["ChatWidget (UI)\n+ póster + open-url"] --> Hook["useChat (estado)"]
         Hook --> Contract["ChatTransport (puerto / interfaz)"]
         Widget --> Markdown["MarkdownContent\n(render + sanitización)"]
     end
 
-    Contract -->|"Fase 1 · Proyecto 1"| Mock["MockTransport\n(adaptador simulado)"]
-    Contract -.->|"Fase 2 · Proyecto 2"| Agent["AgentTransport\n(adaptador real, pendiente)"]
+    Contract -->|"Fase 1"| Mock["MockTransport\n(simulado)"]
+    Contract -->|"Fase 2"| AgentTransport["AgentTransport\n(SSE a /api/chat)"]
 
-    Mock --> MockBackend[("WebSocket / API\nsimulada")]
-    Agent -.-> RealAgent[("Servicio de agente\n(LLM real)")]
+    subgraph Backend["Servidor Node (server/src)"]
+        AgentTransport -->|HTTP POST SSE| API["/api/chat\n(CORS + RateLimiter)"]
+        API --> Agent["Agente Orquestador\n(OpenAI + Guardrails LLM01/LLM07)"]
+    end
+
+    subgraph MCP["Servidores MCP (server/mcp)"]
+        Agent -->|tools/call| Contracts["contracts.ts\n(Contratos tipados)"]
+        Contracts --> MCPTMDB["MCP TMDB\n(Películas, recomendaciones, detalles)"]
+        Contracts --> MCPBooks["MCP Libros\n(Google Books API)"]
+    end
+
+    MCPTMDB --> TMDBAPI[("API The Movie Database\n(1000 req/día + caché)")]
+    MCPBooks --> BooksAPI[("API Google Books\n(1000 req/día + caché)")]
 ```
 
-## Capas del código (`src/`)
+## Capas del código
 
-| Capa                   | Carpeta                      | Responsabilidad                                               | Depende de            |
-| ---------------------- | ---------------------------- | ------------------------------------------------------------- | --------------------- |
-| UI                     | `components/`                | Presentación pura (React)                                     | `state/`, `markdown/` |
-| Render de contenido    | `markdown/`                  | Convertir Markdown del agente a HTML seguro (sanitizado)      | —                     |
-| Estado                 | `state/`                     | Traducir eventos del transporte a estado de React (`useChat`) | `transport/`          |
-| Transporte (puerto)    | `transport/ChatTransport.ts` | Contrato que desacopla la UI del origen de datos              | —                     |
-| Transporte (adaptador) | `transport/mock/`            | Implementación simulada para el Proyecto 1                    | `ChatTransport`       |
-| Tipos                  | `types/`                     | Tipos compartidos entre todas las capas                       | —                     |
+| Capa                     | Carpeta                          | Responsabilidad                                               | Depende de                         |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------- | ---------------------------------- |
+| UI                       | `src/components/`                | Presentación pura (React), póster y visualización             | `state/`, `markdown/`              |
+| Render de contenido      | `src/markdown/`                  | Convertir Markdown del agente a HTML seguro (sanitizado)      | —                                  |
+| Estado                   | `src/state/`                     | Traducir eventos del transporte a estado de React (`useChat`) | `transport/`                       |
+| Transporte (puerto)      | `src/transport/ChatTransport.ts` | Contrato que desacopla la UI del origen de datos              | —                                  |
+| Transporte (adaptadores) | `src/transport/mock/`, `agent/`  | Implementaciones concreta simulada y real (SSE)               | `ChatTransport`                    |
+| Tipos de UI / SDK        | `src/types/`                     | Tipos compartidos entre capas del widget                      | —                                  |
+| Servidor backend         | `server/src/`                    | HTTP server, routing, rate limit, endpoint `/api/chat`        | `config`                           |
+| Servidores MCP           | `server/mcp/`                    | Herramientas expuestas bajo protocolo MCP y contratos comunes | `@modelcontextprotocol/sdk`, `zod` |
 
-La regla que mantiene esto desacoplado: **nada en `components/` o `state/` importa `transport/mock` directamente**, salvo el punto de composición (`demo/`, o el consumidor final del SDK), que decide qué adaptador usar.
+La regla que mantiene esto desacoplado: **nada en `components/` o `state/` importa adaptadores ni servidores MCP directamente**. Toda la interacción del widget pasa por `ChatTransport`.
 
 ## Qué cambia en el Proyecto 2
 
-Se agrega `transport/agent/AgentTransport.ts` implementando `ChatTransport` contra el agente real. `ChatWidget`, `useChat`, `MessageList`, `MessageBubble`, etc. no deberían requerir cambios.
+1. Se agrega `src/transport/agent/AgentTransport.ts` implementando `ChatTransport` contra `/api/chat` (SSE).
+2. Se incorpora el evento `{ type: "open-url", url: string }` para abrir pestañas de IMDb y Google Books en el navegador, y el atributo `posterUrl?: string` en `ChatMessage` para visualizar el póster de la película.
+3. Se añaden los servidores MCP en `server/mcp/` con contratos estrictos definidos en `server/mcp/contracts.ts`.
+4. El agente centralizado orquesta llamadas a las herramientas MCP y protege la interacción contra vulnerabilidades OWASP LLM01 y LLM07.
