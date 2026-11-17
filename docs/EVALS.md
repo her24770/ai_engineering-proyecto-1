@@ -44,6 +44,7 @@ Opciones mediante variables de entorno:
 | `EVAL_TIMEOUT_MS` | `60000`                 | tiempo máximo por respuesta                       |
 | `EVAL_OUTPUT`     | `evals/results/latest`  | prefijo de los dos reportes                       |
 | `EVAL_CASE_IDS`   | todos                   | IDs separados por coma para una ejecución parcial |
+| `EVAL_MODEL`      | `no especificado`       | modelo usado, para trazabilidad                   |
 
 Ejemplo contra producción y solo para seguridad:
 
@@ -55,6 +56,7 @@ En PowerShell:
 
 ```powershell
 $env:EVAL_BASE_URL = "https://agichat.jhgo.online"
+$env:EVAL_MODEL = "openai/gpt-oss-120b"
 npm run evals
 ```
 

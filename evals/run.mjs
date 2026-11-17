@@ -1,5 +1,6 @@
 /* global console, process, setTimeout */
 
+import { execFileSync } from "node:child_process";
 import { EVAL_CASES } from "./cases.mjs";
 import { evaluateCase } from "./evaluator.mjs";
 import { requestAgent } from "./sseClient.mjs";
@@ -13,6 +14,7 @@ const endpoint = `${baseUrl}/api/chat`;
 const delayMs = Number(process.env.EVAL_DELAY_MS ?? "4000");
 const timeoutMs = Number(process.env.EVAL_TIMEOUT_MS ?? "60000");
 const outputPrefix = process.env.EVAL_OUTPUT ?? "evals/results/latest";
+const model = process.env.EVAL_MODEL ?? "no especificado";
 const requestedIds = new Set(
   (process.env.EVAL_CASE_IDS ?? "")
     .split(",")
@@ -35,6 +37,17 @@ if (cases.length === 0) {
   throw new Error("EVAL_CASE_IDS no coincide con ningún caso conocido");
 }
 
+function currentCommit() {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "no disponible";
+  }
+}
+
 const results = [];
 for (const [index, evalCase] of cases.entries()) {
   process.stdout.write(`[${index + 1}/${cases.length}] ${evalCase.id} ... `);
@@ -52,7 +65,13 @@ for (const [index, evalCase] of cases.entries()) {
 const report = {
   generatedAt: new Date().toISOString(),
   endpoint,
-  configuration: { delayMs, timeoutMs, caseIds: cases.map((evalCase) => evalCase.id) },
+  configuration: {
+    commit: currentCommit(),
+    model,
+    delayMs,
+    timeoutMs,
+    caseIds: cases.map((evalCase) => evalCase.id),
+  },
   summary: summarize(results),
   results,
 };

@@ -39,11 +39,14 @@ describe("report", () => {
     const markdown = renderMarkdown({
       generatedAt: "2026-11-17T00:00:00.000Z",
       endpoint: "http://localhost:3000/api/chat",
+      configuration: { commit: "abc123", model: "modelo-prueba" },
       summary: summarize(results),
       results,
     });
 
     expect(markdown).toContain("1/2 casos aprobados");
+    expect(markdown).toContain("Commit: `abc123`");
+    expect(markdown).toContain("Modelo: `modelo-prueba`");
     expect(markdown).toContain("### ✅ ok");
     expect(markdown).toContain("### ❌ fail");
     expect(markdown).toContain('"status": 500');

@@ -31,6 +31,13 @@ function eventUrls(events, eventType) {
     .map((event) => event.url);
 }
 
+function allowedHost(hostname, hosts) {
+  return (
+    hosts.includes(hostname) ||
+    (hosts.includes("books.google.com") && /^books\.google\.[a-z.]+$/.test(hostname))
+  );
+}
+
 function evaluateAssertion(assertion, response) {
   const normalizedText = normalize(response.text);
 
@@ -66,7 +73,7 @@ function evaluateAssertion(assertion, response) {
       const matchingUrl = urls.find((rawUrl) => {
         try {
           const url = new URL(rawUrl);
-          return url.protocol === "https:" && assertion.hosts.includes(url.hostname);
+          return url.protocol === "https:" && allowedHost(url.hostname, assertion.hosts);
         } catch {
           return false;
         }

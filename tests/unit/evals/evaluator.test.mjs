@@ -52,6 +52,26 @@ describe("evaluateCase", () => {
     });
   });
 
+  it("acepta dominios regionales oficiales de Google Books", () => {
+    const booksCase = {
+      ...evalCase,
+      assertions: [
+        { type: "url-host", eventType: "open-url", hosts: ["books.google.com"] },
+      ],
+    };
+    const result = evaluateCase(
+      booksCase,
+      {
+        status: 200,
+        text: "Listo",
+        events: [{ type: "open-url", url: "https://books.google.com.gt/books?id=dune" }],
+      },
+      1,
+    );
+
+    expect(result.passed).toBe(true);
+  });
+
   it("detecta rechazos seguros y marcadores sensibles", () => {
     const securityCase = {
       ...evalCase,

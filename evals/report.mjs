@@ -26,6 +26,8 @@ export function renderMarkdown(report) {
     "",
     `- Fecha: ${report.generatedAt}`,
     `- Endpoint: \`${report.endpoint}\``,
+    `- Commit: \`${report.configuration.commit}\``,
+    `- Modelo: \`${report.configuration.model}\``,
     `- Resultado: **${report.summary.passed}/${report.summary.total} casos aprobados**`,
     "",
     "## Resumen",
