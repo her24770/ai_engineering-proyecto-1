@@ -3,6 +3,7 @@ import { useChat } from "../../state/useChat";
 import { MessageList } from "../MessageList/MessageList";
 import { InputBar } from "../InputBar/InputBar";
 import { TypingIndicator } from "../TypingIndicator/TypingIndicator";
+import tmdbLogo from "../../assets/logoTMBD1.svg";
 import "./ChatWidget.css";
 
 export interface ChatWidgetProps {
@@ -46,6 +47,13 @@ export function ChatWidget({ transport, title = "AGIChat" }: ChatWidgetProps) {
         </div>
       )}
       <InputBar onSend={sendMessage} />
+      {/* Atribución obligatoria por los términos de uso de la API de TMDB. */}
+      <footer className="agichat-widget__attribution">
+        <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">
+          <img src={tmdbLogo} alt="The Movie Database (TMDB)" />
+        </a>
+        <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+      </footer>
     </div>
   );
 }

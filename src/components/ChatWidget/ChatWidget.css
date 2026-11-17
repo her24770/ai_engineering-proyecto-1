@@ -39,3 +39,24 @@
   color: var(--agichat-color-primary);
   font-weight: 600;
 }
+
+.agichat-widget__attribution {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: #6b7280;
+}
+
+.agichat-widget__attribution img {
+  display: block;
+  height: 0.6rem;
+  width: auto;
+}
+
+.agichat-widget__attribution a {
+  flex-shrink: 0;
+}

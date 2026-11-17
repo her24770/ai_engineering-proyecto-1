@@ -24,3 +24,15 @@ describe("ChatWidget", () => {
     );
   });
 });
+
+describe("ChatWidget: atribución de TMDB", () => {
+  it("muestra el logo enlazado a TMDB y el aviso exigido por la licencia", () => {
+    render(<ChatWidget transport={new MockTransport()} />);
+
+    expect(
+      screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB."),
+    ).toBeInTheDocument();
+    const logo = screen.getByRole("img", { name: "The Movie Database (TMDB)" });
+    expect(logo.closest("a")).toHaveAttribute("href", "https://www.themoviedb.org");
+  });
+});
