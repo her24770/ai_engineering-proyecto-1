@@ -1,34 +1,57 @@
 .agichat-input-bar {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem;
-  border-top: 1px solid #e5e7eb;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid var(--agichat-color-border, #e8e8e8);
 }
 
 .agichat-input-bar input {
   flex: 1;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--agichat-color-primary);
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--agichat-color-surface, #f4f4f4);
+  color: var(--agichat-color-secondary, #111111);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.agichat-input-bar input::placeholder {
+  color: var(--agichat-color-terciary, #8a8a8a);
 }
 
 .agichat-input-bar input:focus-visible {
-  outline: 2px solid var(--agichat-color-primary);
-  outline-offset: 1px;
-  border-color: var(--agichat-color-bg);
-
+  outline: none;
+  border-color: var(--agichat-color-primary, #111111);
+  background: var(--agichat-color-bg, #ffffff);
 }
 
 .agichat-input-bar button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
   border: none;
   cursor: pointer;
-  background-color: var(--agichat-color-secondary);
-  color: var(--agichat-color-bg);
+  background-color: var(--agichat-color-primary, #111111);
+  color: var(--agichat-color-bg, #ffffff);
+  font-size: 1rem;
+  line-height: 1;
+  transition: opacity 0.15s ease;
+}
+
+.agichat-input-bar button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.agichat-input-bar button:focus-visible {
+  outline: 2px solid var(--agichat-color-primary, #111111);
+  outline-offset: 2px;
 }
 
 .agichat-input-bar button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.25;
 }

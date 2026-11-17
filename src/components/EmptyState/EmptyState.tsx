@@ -1,15 +1,11 @@
-import bearFace from "./bear-face.svg";
 import "./EmptyState.css";
 
 export function EmptyState() {
   return (
     <div className="agichat-empty-state">
-      <div className="agichat-empty-state__avatar">
-        <img src={bearFace} alt="" className="agichat-empty-state__icon" />
-      </div>
-      <p className="agichat-empty-state__title">¡Hola soy tu asistente virtual!</p>
+      <p className="agichat-empty-state__title">¿Qué película quieres ver hoy?</p>
       <p className="agichat-empty-state__subtitle">
-        Escribe una duda y yo te ayudaré en lo que pueda
+        Pide una recomendación y te cuento si vale la pena, también frente a su libro.
       </p>
     </div>
   );

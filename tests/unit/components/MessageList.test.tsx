@@ -17,7 +17,7 @@ describe("MessageList", () => {
 
     try {
       const { rerender } = render(<MessageList messages={[]} />);
-      expect(screen.getByText("¡Hola soy tu asistente virtual!")).toBeInTheDocument();
+      expect(screen.getByText("¿Qué película quieres ver hoy?")).toBeInTheDocument();
       expect(scrollIntoView).not.toHaveBeenCalled();
 
       const message: ChatMessage = {
@@ -28,7 +28,7 @@ describe("MessageList", () => {
         status: "sending",
       };
       rerender(<MessageList messages={[message]} />);
-      expect(screen.queryByText("¡Hola soy tu asistente virtual!")).toBeNull();
+      expect(screen.queryByText("¿Qué película quieres ver hoy?")).toBeNull();
       expect(screen.getByRole("log")).toHaveTextContent("Hola");
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth" });
 
