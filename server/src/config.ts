@@ -3,7 +3,10 @@ export interface ServerConfig {
   allowedOrigins: string[];
   rateLimitMax: number;
   rateLimitWindowMs: number;
-  openaiApiKey: string | undefined;
+  llmApiKey: string | undefined;
+  llmModel: string;
+  llmBaseUrl: string;
+  llmReasoningEffort: string | undefined;
   tmdbApiKey: string | undefined;
   googleBooksApiKey: string | undefined;
 }
@@ -33,7 +36,12 @@ export function loadConfig(env: Env): ServerConfig {
       .filter(Boolean),
     rateLimitMax: toPositiveInt(env.RATE_LIMIT_MAX, 30, "RATE_LIMIT_MAX"),
     rateLimitWindowMs: toPositiveInt(env.RATE_LIMIT_WINDOW_MS, 60_000, "RATE_LIMIT_WINDOW_MS"),
-    openaiApiKey: env.OPENAI_API_KEY || undefined,
+    llmApiKey: env.LLM_API_KEY || undefined,
+    llmModel: env.LLM_MODEL || "openai/gpt-oss-120b",
+    llmBaseUrl: (env.LLM_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, ""),
+    // "low" por defecto: en gpt-oss reduce ~70 % los tokens (clave con 8k tokens/min).
+    // Vacío = no se envía (para modelos sin razonamiento, p. ej. gpt-4o-mini).
+    llmReasoningEffort: (env.LLM_REASONING_EFFORT ?? "low") || undefined,
     tmdbApiKey: env.TMDB_API_KEY || undefined,
     googleBooksApiKey: env.GOOGLE_BOOKS_API_KEY || undefined,
   };

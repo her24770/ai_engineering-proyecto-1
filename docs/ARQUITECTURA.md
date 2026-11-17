@@ -31,7 +31,7 @@ flowchart TD
 
     subgraph Backend["Servidor Node (server/src)"]
         AgentTransport -->|HTTP POST SSE| API["/api/chat\n(CORS + RateLimiter)"]
-        API --> Agent["Agente Orquestador\n(OpenAI + Guardrails LLM01/LLM07)"]
+        API --> Agent["Agente Orquestador\n(LLM vía Groq + Guardrails LLM01/LLM07)"]
     end
 
     subgraph MCP["Servidores MCP (server/mcp)"]
@@ -64,4 +64,4 @@ La regla que mantiene esto desacoplado: **nada en `components/` o `state/` impor
 1. Se agrega `src/transport/agent/AgentTransport.ts` implementando `ChatTransport` contra `/api/chat` (SSE).
 2. Se incorpora el evento `{ type: "open-url", url: string }` para abrir pestañas de IMDb y Google Books en el navegador, y el atributo `posterUrl?: string` en `ChatMessage` para visualizar el póster de la película.
 3. Se añaden los servidores MCP en `server/mcp/` con contratos estrictos definidos en `server/mcp/contracts.ts`.
-4. El agente centralizado orquesta llamadas a las herramientas MCP y protege la interacción contra vulnerabilidades OWASP LLM01 y LLM07.
+4. El agente centralizado orquesta llamadas a las herramientas MCP y protege la interacción contra vulnerabilidades OWASP LLM01 y LLM07. Detalle, diagrama de bajo nivel y contrato SSE en [AGENTE.md](./AGENTE.md).

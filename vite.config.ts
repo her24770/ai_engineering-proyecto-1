@@ -10,11 +10,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      include: ["src/**/*.{ts,tsx}", "server/src/**/*.ts", "server/mcp/**/*.ts"],
+      include: ["src/**/*.{ts,tsx}", "server/**/*.ts"],
       exclude: [
         "src/**/index.ts",
         "server/src/index.ts",
         "server/mcp/**/index.ts",
+        "server/mcp/**/stdio.ts",
         "server/mcp/contracts.ts",
         "src/types/**",
         "src/transport/ChatTransport.ts",
