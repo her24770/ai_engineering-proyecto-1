@@ -82,3 +82,29 @@ export async function requestAgent(endpoint, messages, options = {}) {
     clearTimeout(timeout);
   }
 }
+
+export function isRateLimitResponse(response) {
+  return (
+    typeof response.error === "string" &&
+    /muchas solicitudes|rate.?limit|429/i.test(response.error)
+  );
+}
+
+export async function requestAgentWithRetry(endpoint, messages, options = {}) {
+  const retries = options.retries ?? 1;
+  const retryDelayMs = options.retryDelayMs ?? 60_000;
+  const request = options.request ?? requestAgent;
+  const sleep =
+    options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+
+  let response;
+  let attempts = 0;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    attempts = attempt + 1;
+    response = await request(endpoint, messages, options);
+    if (!isRateLimitResponse(response) || attempt === retries) break;
+    await sleep(retryDelayMs);
+  }
+
+  return { ...response, attempts };
+}

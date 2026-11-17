@@ -29,23 +29,27 @@ confiables.
 npm run evals
 ```
 
-Por defecto se llama a `http://localhost:3000/api/chat`, se esperan cuatro
-segundos entre casos para respetar el free tier de Groq y se generan:
+Por defecto se llama a `http://localhost:3000/api/chat`, se esperan 35 segundos
+entre los casos funcionales que consumen LLM y se reintenta una vez tras 60
+segundos si Groq limita la cuota. Los casos de guardrails locales no esperan.
+Se generan:
 
 - `evals/results/latest.json`: resultado procesable por herramientas.
 - `evals/results/latest.md`: reporte legible para el PR y la presentación.
 
 Opciones mediante variables de entorno:
 
-| Variable             | Default                 | Uso                                               |
-| -------------------- | ----------------------- | ------------------------------------------------- |
-| `EVAL_BASE_URL`      | `http://localhost:3000` | servidor local o desplegado                       |
-| `EVAL_DELAY_MS`      | `4000`                  | pausa entre casos para no agotar la cuota         |
-| `EVAL_TIMEOUT_MS`    | `60000`                 | tiempo máximo por respuesta                       |
-| `EVAL_OUTPUT`        | `evals/results/latest`  | prefijo de los dos reportes                       |
-| `EVAL_CASE_IDS`      | todos                   | IDs separados por coma para una ejecución parcial |
-| `EVAL_MODEL`         | `no especificado`       | modelo usado, para trazabilidad                   |
-| `EVAL_TARGET_COMMIT` | `no especificado`       | commit desplegado en el endpoint                  |
+| Variable              | Default                 | Uso                                               |
+| --------------------- | ----------------------- | ------------------------------------------------- |
+| `EVAL_BASE_URL`       | `http://localhost:3000` | servidor local o desplegado                       |
+| `EVAL_DELAY_MS`       | `35000`                 | pausa entre casos funcionales                     |
+| `EVAL_TIMEOUT_MS`     | `60000`                 | tiempo máximo por respuesta                       |
+| `EVAL_RETRIES`        | `1`                     | reintentos ante límite de cuota                   |
+| `EVAL_RETRY_DELAY_MS` | `60000`                 | espera antes del reintento                        |
+| `EVAL_OUTPUT`         | `evals/results/latest`  | prefijo de los dos reportes                       |
+| `EVAL_CASE_IDS`       | todos                   | IDs separados por coma para una ejecución parcial |
+| `EVAL_MODEL`          | `no especificado`       | modelo usado, para trazabilidad                   |
+| `EVAL_TARGET_COMMIT`  | `no especificado`       | commit desplegado en el endpoint                  |
 
 Ejemplo contra producción y solo para seguridad:
 

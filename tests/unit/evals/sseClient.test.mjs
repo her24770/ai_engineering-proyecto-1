@@ -1,6 +1,11 @@
 /* global describe, expect, it, vi */
 
-import { parseSse, requestAgent } from "../../../evals/sseClient.mjs";
+import {
+  isRateLimitResponse,
+  parseSse,
+  requestAgent,
+  requestAgentWithRetry,
+} from "../../../evals/sseClient.mjs";
 
 describe("parseSse", () => {
   it("analiza eventos SSE y tolera saltos CRLF", () => {
@@ -78,5 +83,35 @@ describe("requestAgent", () => {
       }),
     });
     expect(result.error).toContain("no incluyó done");
+  });
+});
+
+describe("rate limit retries", () => {
+  it("reintenta una respuesta limitada y conserva el número de intentos", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({ error: "Hay muchas solicitudes en este momento" })
+      .mockResolvedValueOnce({ status: 200, text: "ok", events: [] });
+    const sleep = vi.fn(async () => {});
+
+    const response = await requestAgentWithRetry("http://x", [], {
+      request,
+      sleep,
+      retries: 1,
+      retryDelayMs: 123,
+    });
+
+    expect(response.attempts).toBe(2);
+    expect(response.text).toBe("ok");
+    expect(sleep).toHaveBeenCalledWith(123);
+  });
+
+  it("no reintenta errores que no son de cuota", async () => {
+    const request = vi.fn(async () => ({ error: "servicio caído" }));
+    const response = await requestAgentWithRetry("http://x", [], { request });
+
+    expect(response.attempts).toBe(1);
+    expect(request).toHaveBeenCalledOnce();
+    expect(isRateLimitResponse(response)).toBe(false);
   });
 });

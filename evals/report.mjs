@@ -46,7 +46,7 @@ export function renderMarkdown(report) {
     lines.push(
       `### ${result.passed ? "✅" : "❌"} ${result.id}`,
       "",
-      `${result.requirement} (${result.durationMs} ms)`,
+      `${result.requirement} (${result.durationMs} ms, ${result.attempts ?? 1} intento(s))`,
       "",
     );
     for (const check of result.checks) {
