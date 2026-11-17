@@ -15,6 +15,7 @@ const delayMs = Number(process.env.EVAL_DELAY_MS ?? "4000");
 const timeoutMs = Number(process.env.EVAL_TIMEOUT_MS ?? "60000");
 const outputPrefix = process.env.EVAL_OUTPUT ?? "evals/results/latest";
 const model = process.env.EVAL_MODEL ?? "no especificado";
+const targetCommit = process.env.EVAL_TARGET_COMMIT ?? "no especificado";
 const requestedIds = new Set(
   (process.env.EVAL_CASE_IDS ?? "")
     .split(",")
@@ -66,7 +67,8 @@ const report = {
   generatedAt: new Date().toISOString(),
   endpoint,
   configuration: {
-    commit: currentCommit(),
+    runnerCommit: currentCommit(),
+    targetCommit,
     model,
     delayMs,
     timeoutMs,

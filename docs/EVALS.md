@@ -37,14 +37,15 @@ segundos entre casos para respetar el free tier de Groq y se generan:
 
 Opciones mediante variables de entorno:
 
-| Variable          | Default                 | Uso                                               |
-| ----------------- | ----------------------- | ------------------------------------------------- |
-| `EVAL_BASE_URL`   | `http://localhost:3000` | servidor local o desplegado                       |
-| `EVAL_DELAY_MS`   | `4000`                  | pausa entre casos para no agotar la cuota         |
-| `EVAL_TIMEOUT_MS` | `60000`                 | tiempo máximo por respuesta                       |
-| `EVAL_OUTPUT`     | `evals/results/latest`  | prefijo de los dos reportes                       |
-| `EVAL_CASE_IDS`   | todos                   | IDs separados por coma para una ejecución parcial |
-| `EVAL_MODEL`      | `no especificado`       | modelo usado, para trazabilidad                   |
+| Variable             | Default                 | Uso                                               |
+| -------------------- | ----------------------- | ------------------------------------------------- |
+| `EVAL_BASE_URL`      | `http://localhost:3000` | servidor local o desplegado                       |
+| `EVAL_DELAY_MS`      | `4000`                  | pausa entre casos para no agotar la cuota         |
+| `EVAL_TIMEOUT_MS`    | `60000`                 | tiempo máximo por respuesta                       |
+| `EVAL_OUTPUT`        | `evals/results/latest`  | prefijo de los dos reportes                       |
+| `EVAL_CASE_IDS`      | todos                   | IDs separados por coma para una ejecución parcial |
+| `EVAL_MODEL`         | `no especificado`       | modelo usado, para trazabilidad                   |
+| `EVAL_TARGET_COMMIT` | `no especificado`       | commit desplegado en el endpoint                  |
 
 Ejemplo contra producción y solo para seguridad:
 
@@ -57,6 +58,7 @@ En PowerShell:
 ```powershell
 $env:EVAL_BASE_URL = "https://agichat.jhgo.online"
 $env:EVAL_MODEL = "openai/gpt-oss-120b"
+$env:EVAL_TARGET_COMMIT = "<commit-desplegado>"
 npm run evals
 ```
 
