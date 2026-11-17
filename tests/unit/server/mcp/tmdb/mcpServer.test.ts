@@ -1,8 +1,14 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
-import { createTmdbClient } from "../tmdbClient.ts";
-import { createTmdbMcpServer } from "./mcpServer.ts";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import { createTmdbClient } from "../../../../../server/mcp/tmdb/tmdbClient.ts";
+import { createTmdbMcpServer } from "../../../../../server/mcp/tmdb/mcpServer.ts";
+import type {
+    MovieSummary,
+    MovieDetails
+} from "../../../../../server/mcp/contracts.ts";
 
 const movie = {
     id: 157336,
@@ -18,6 +24,20 @@ const details = {
     vote_average: 8.5,
     vote_count: 30000,
     genres: [{ id: 878, name: "Ciencia ficción" }]
+};
+
+const expectedMovie: MovieSummary = {
+    id: 157336,
+    title: "Interstellar",
+    overview: "Una aventura espacial",
+    year: "2014",
+    poster_url: "https://image.tmdb.org/t/p/w500/poster.jpg"
+};
+
+const expectedDetails: MovieDetails = {
+    ...expectedMovie,
+    rating: 8.5,
+    imdb_url: "https://www.imdb.com/title/tt0816692/"
 };
 
 function jsonResponse(data: unknown): Response {
@@ -112,9 +132,10 @@ describe("Servidor MCP TMDB", () => {
         });
 
         expect(result.isError).not.toBe(true);
-        expect(readJson(result.content)).toMatchObject({
-            results: [{ id: 157336, title: "Interstellar" }]
-        });
+        expect(
+            readJson(CallToolResultSchema.parse(result).content)
+        ).toEqual([expectedMovie]);
+
         expect(session.mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -125,11 +146,11 @@ describe("Servidor MCP TMDB", () => {
         });
 
         expect(result.isError).not.toBe(true);
-        expect(readJson(result.content)).toMatchObject({
-            id: 157336,
-            poster_url: "https://image.tmdb.org/t/p/w500/poster.jpg",
-            imdb_url: "https://www.imdb.com/title/tt0816692/"
-        });
+        expect(
+            readJson(CallToolResultSchema.parse(result).content)
+        ).toEqual(expectedDetails);
+
+        expect(session.mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it("recomienda películas por ID", async () => {
@@ -139,9 +160,11 @@ describe("Servidor MCP TMDB", () => {
         });
 
         expect(result.isError).not.toBe(true);
-        expect(readJson(result.content)).toMatchObject({
-            movies: [{ id: 157336, title: "Interstellar" }]
-        });
+        expect(
+            readJson(CallToolResultSchema.parse(result).content)
+        ).toEqual([expectedMovie]);
+
+        expect(session.mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it("recomienda películas por género", async () => {
@@ -151,9 +174,9 @@ describe("Servidor MCP TMDB", () => {
         });
 
         expect(result.isError).not.toBe(true);
-        expect(readJson(result.content)).toMatchObject({
-            movies: [{ id: 157336 }]
-        });
+        expect(
+            readJson(CallToolResultSchema.parse(result).content)
+        ).toEqual([expectedMovie]);
 
         expect(session.mockFetch).toHaveBeenCalledTimes(2);
     });

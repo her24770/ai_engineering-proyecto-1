@@ -1,28 +1,15 @@
+
 import type { TmdbMovie, TmdbMovieDetails } from "./tmdbClient.ts";
+import type { MovieSummary, MovieDetails } from "../contracts.ts";
 
-export interface MovieSummary {
-  id: number;
-  title: string;
-  overview: string;
-  year: number | null;
-  poster_url: string | null;
-}
-
-export interface MovieDetails extends MovieSummary {
-  vote_average: number;
-  vote_count: number;
-  genres: Array<{ id: number; name: string }>;
-  imdb_url: string | null;
-}
-
-function getReleaseYear(releaseDate: string): number | null {
+function getReleaseYear(releaseDate: string): string | null {
   const match = /^(\d{4})-\d{2}-\d{2}$/.exec(releaseDate);
+
   if (!match) {
     return null;
   }
 
-  const year = Number(match[1]);
-  return year > 0 ? year : null;
+  return Number(match[1]) > 0 ? match[1] : null;
 }
 
 export function getPosterUrl(path: string | null): string | null {
@@ -58,9 +45,19 @@ export function mapMovies(movies: readonly TmdbMovie[]): MovieSummary[] {
 export function mapMovieDetails(movie: TmdbMovieDetails): MovieDetails {
   return {
     ...mapMovie(movie),
-    vote_average: movie.vote_average,
-    vote_count: movie.vote_count,
-    genres: movie.genres.map((genre) => ({ id: genre.id, name: genre.name })),
+    rating: movie.vote_average,
     imdb_url: getImdbUrl(movie.imdb_id)
+  };
+}
+
+export function mapRecommendation(
+  movie: Omit<TmdbMovie, "poster_path"> & { poster_url: string | null }
+): MovieSummary {
+  return {
+    id: movie.id,
+    title: movie.title,
+    overview: movie.overview,
+    year: getReleaseYear(movie.release_date),
+    poster_url: movie.poster_url
   };
 }

@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it, vi } from "vitest";
-import { createTmdbClient } from "./tmdbClient.ts";
+import { createTmdbClient } from "../../../../../server/mcp/tmdb/tmdbClient.ts";
 
 
 

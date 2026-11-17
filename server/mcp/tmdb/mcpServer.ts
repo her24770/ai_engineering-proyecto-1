@@ -1,7 +1,12 @@
 
-import { McpServer } from "@modelcontextprotocol/server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
-import { createTmdbClient } from "../tmdbClient.ts";
+import { createTmdbClient } from "./tmdbClient.ts";
+import {
+    mapMovies,
+    mapMovieDetails,
+    mapRecommendation
+} from "./tmdbMapper.ts";
 
 type TmdbClient = ReturnType<typeof createTmdbClient>;
 
@@ -26,18 +31,17 @@ export function createTmdbMcpServer(client: TmdbClient): McpServer {
                 content: [
                     {
                         type: "text",
-                        text: JSON.stringify(result)
+                        text: JSON.stringify(mapMovies(result.results))
                     }
                 ]
             };
         }
     );
 
-
     server.registerTool(
         "get_movie_details",
         {
-            description: "Obtiene información detallada de una película de TMDB, incluyendo puntuación, géneros, póster y enlace de IMDb.",
+            description: "Obtiene información detallada de una película de TMDB, incluyendo puntuación, póster y enlace de IMDb.",
             inputSchema: z.object({
                 movie_id: z.number().int().positive()
             })
@@ -49,13 +53,12 @@ export function createTmdbMcpServer(client: TmdbClient): McpServer {
                 content: [
                     {
                         type: "text",
-                        text: JSON.stringify(result)
+                        text: JSON.stringify(mapMovieDetails(result))
                     }
                 ]
             };
         }
     );
-
 
     server.registerTool(
         "get_recommendations",
@@ -92,7 +95,9 @@ export function createTmdbMcpServer(client: TmdbClient): McpServer {
                 content: [
                     {
                         type: "text",
-                        text: JSON.stringify(result)
+                        text: JSON.stringify(
+                            result.movies.map(mapRecommendation)
+                        )
                     }
                 ]
             };

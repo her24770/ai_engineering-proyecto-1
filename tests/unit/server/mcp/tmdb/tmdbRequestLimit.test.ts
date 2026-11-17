@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from "vitest";
-import { createDailyQuota } from "./tmdbRequestLimit.ts";
+import { createDailyQuota } from "../../../../../server/mcp/tmdb/tmdbRequestLimit.ts";
 
 describe("TMDB Daily Quota", () => {
     it("debe iniciar con 1000 solicitudes disponibles", () => {

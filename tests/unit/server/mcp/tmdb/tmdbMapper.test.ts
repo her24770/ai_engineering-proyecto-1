@@ -1,3 +1,4 @@
+
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
@@ -7,8 +8,11 @@ import {
   mapMovie,
   mapMovieDetails,
   mapMovies
-} from "./tmdbMapper.ts";
-import type { TmdbMovie, TmdbMovieDetails } from "./tmdbClient.ts";
+} from "../../../../../server/mcp/tmdb/tmdbMapper.ts";
+import type {
+  TmdbMovie,
+  TmdbMovieDetails
+} from "../../../../../server/mcp/tmdb/tmdbClient.ts";
 
 const movie: TmdbMovie = {
   id: 157336,
@@ -24,7 +28,7 @@ describe("movieMapper", () => {
       id: 157336,
       title: "Interstellar",
       overview: "Una aventura espacial",
-      year: 2014,
+      year: "2014",
       poster_url: "https://image.tmdb.org/t/p/w500/poster.jpg"
     });
   });
@@ -39,8 +43,10 @@ describe("movieMapper", () => {
     };
 
     const results = mapMovies([movie, anotherMovie]);
+
     expect(results).toHaveLength(2);
     expect(results.map((result) => result.id)).toEqual([157336, 438631]);
+    expect(results[1]?.year).toBe("2021");
     expect(results[1]?.poster_url).toBeNull();
   });
 
@@ -74,12 +80,13 @@ describe("movieMapper", () => {
     expect(getImdbUrl("tt0816692")).toBe(
       "https://www.imdb.com/title/tt0816692/"
     );
+
     expect(getImdbUrl(null)).toBeNull();
     expect(getImdbUrl("https://ejemplo.com")).toBeNull();
     expect(getImdbUrl("tt123/otra-ruta")).toBeNull();
   });
 
-  it("mapea los detalles, calificaciones, géneros e IMDb", () => {
+  it("mapea los detalles según el contrato compartido", () => {
     const details: TmdbMovieDetails = {
       ...movie,
       vote_average: 8.4,
@@ -94,11 +101,9 @@ describe("movieMapper", () => {
       id: 157336,
       title: "Interstellar",
       overview: "Una aventura espacial",
-      year: 2014,
+      year: "2014",
       poster_url: "https://image.tmdb.org/t/p/w500/poster.jpg",
-      vote_average: 8.4,
-      vote_count: 30000,
-      genres: [{ id: 878, name: "Ciencia ficción" }],
+      rating: 8.4,
       imdb_url: "https://www.imdb.com/title/tt0816692/"
     });
   });
@@ -116,9 +121,10 @@ describe("movieMapper", () => {
     };
 
     const result = mapMovieDetails(details);
+
     expect(result.poster_url).toBeNull();
     expect(result.imdb_url).toBeNull();
-    expect(result.genres).toEqual([]);
+    expect(result.rating).toBe(0);
   });
 
   it("no modifica el objeto original", () => {
