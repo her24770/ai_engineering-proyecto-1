@@ -10,6 +10,7 @@ Consultar antes de cambiar la estructura del proyecto o los límites entre módu
 
 - [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) — decisiones de diseño y capas del sistema.
 - [`docs/ESTRUCTURA_CARPETAS.md`](docs/ESTRUCTURA_CARPETAS.md) — dónde colocar cada tipo de artefacto.
+- [`docs/AGENTE.md`](docs/AGENTE.md) — agente, contrato `POST /api/chat` (SSE) y defensas LLM01/LLM07.
 
 ## Comandos del proyecto
 
