@@ -1,4 +1,4 @@
-import { CANARY, SYSTEM_PROMPT } from "./systemPrompt.ts";
+import { CANARY, CAPABILITIES, SYSTEM_PROMPT } from "./systemPrompt.ts";
 
 export const MAX_INPUT_CHARS = 2000;
 
@@ -51,7 +51,7 @@ function normalize(text: string): string {
 }
 
 /** Frases del prompt lo bastante largas como para no coincidir por casualidad. */
-const PROMPT_FRAGMENTS = SYSTEM_PROMPT.split(/\n|(?<=[.:])\s/)
+const PROMPT_FRAGMENTS = SYSTEM_PROMPT.replace(CAPABILITIES, "").split(/\n|(?<=[.:])\s/)
   .map((fragment) => normalize(fragment.replace(/^-\s*/, "")))
   .filter((fragment) => fragment.length >= 40);
 

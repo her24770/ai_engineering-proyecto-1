@@ -21,7 +21,7 @@ flowchart TD
     InGuard -->|"bloqueado"| Refusal["Respuesta fija de rechazo"]
     InGuard -->|"ok"| Loop
 
-    subgraph Loop["agent.ts: bucle del orquestador (máx. 5 rondas)"]
+    subgraph Loop["agent.ts: bucle del orquestador (máx. 8 rondas)"]
         LLM["LLM (llm.ts, Groq)<br/>system prompt + historial"] -->|"tool_calls"| Router{"¿Qué herramienta?"}
         Router -->|"search_movie<br/>get_recommendations<br/>get_movie_details<br/>search_book"| MCP["mcpTools.ts<br/>cliente MCP"]
         MCP -->|"resultado envuelto en<br/>&lt;resultado_herramienta&gt;<br/>(dato no confiable)"| LLM
@@ -66,12 +66,22 @@ Respuesta: `Content-Type: text/event-stream`. Cada evento es una línea `data: <
 | Evento | Significado | Qué hace el widget |
 |---|---|---|
 | `{"type":"poster","url":"https://image.tmdb.org/..."}` | Póster de la película recomendada | Asignar `posterUrl` al mensaje del agente |
-| `{"type":"open-url","url":"https://www.imdb.com/..."}` | Abrir IMDb o Google Books | Emitir el evento `open-url` de `ChatTransport` |
+| `{"type":"open-url","url":"https://www.imdb.com/..."}` | Abrir IMDb o Google Books | Abrir una pestaña con `window.open`; si el navegador la bloquea, mostrar un enlace de respaldo |
 | `{"type":"delta","text":"..."}` | Texto (Markdown) de la respuesta | Agregarlo al mensaje del agente |
 | `{"type":"done"}` | Fin de la respuesta | Marcar el mensaje como `sent` |
 | `{"type":"error","error":"..."}` | Falla del agente (mensaje genérico) | Mostrar el error |
 
 Los eventos `poster` y `open-url` llegan **antes** del texto final. Todas las URLs ya vienen validadas contra la allowlist y forzadas a `https`.
+
+### Póster, IMDb y Google Books garantizados por el servidor
+
+El modelo no siempre llama bien a `show_poster` y `open_url` (a veces escribe la llamada como texto o se la salta). Por eso, al recibir la respuesta final, el servidor:
+
+1. Quita del texto las llamadas escritas como texto (y las ejecuta), las imágenes Markdown de TMDB y los encabezados "Póster" sueltos.
+2. Elige la película de la que habla la respuesta entre las que devolvieron las herramientas de TMDB (por título y año; si no coincide ninguna, la última consultada en detalle o el primer resultado de búsqueda).
+3. Si faltan, emite el póster, abre su IMDb (pide `get_movie_details` si no tiene `imdb_url`) y abre su Google Books si `search_book` encontró el libro (lo busca por el título si el modelo no lo hizo).
+
+Los enlaces de Google Play Libros se convierten a `books.google.com`. Nada se duplica si el modelo ya lo hizo, y todo pasa por la allowlist.
 
 ## MCP servers que consume el agente
 
@@ -94,7 +104,7 @@ Se recomienda devolver los datos en `structuredContent`; si no hay, el agente us
 | El cliente no puede enviar mensajes `system`, solo `user` y `assistant` | `chatRoute.ts` (zod) |
 | La salida de las herramientas se envuelve como dato no confiable y no puede cerrar la etiqueta | `guardrails.wrapUntrusted` y system prompt |
 | Aunque una inyección tenga éxito, solo se pueden abrir o mostrar URLs de IMDb, Google Books y el CDN de TMDB | `guardrails.allowedUrl` |
-| Máximo 5 rondas de herramientas por mensaje: evita bucles y consumo de la cuota diaria | `agent.ts` |
+| Máximo 8 rondas de herramientas por mensaje (la última sin herramientas, para forzar una respuesta): evita bucles y consumo de la cuota diaria | `agent.ts` |
 
 ### LLM07: system prompt leakage
 
@@ -102,10 +112,13 @@ Se recomienda devolver los datos en `structuredContent`; si no hay, el agente us
 |---|---|
 | El system prompt no contiene secretos: las keys solo viven en el servidor | `systemPrompt.ts` |
 | Instrucción explícita de no revelar ni parafrasear las reglas | `systemPrompt.ts` |
-| La respuesta se revisa completa antes de enviarse: si contiene el canario o frases literales del prompt, se reemplaza | `guardrails.leaksSystemPrompt` |
+| La respuesta se revisa completa antes de enviarse: si contiene el canario o frases literales del prompt, se reemplaza. Se excluyen las capacidades públicas (`CAPABILITIES`), que el agente debe anunciar | `guardrails.leaksSystemPrompt` |
 | Los errores internos se registran en el servidor y el usuario solo ve un mensaje genérico | `chatRoute.ts` |
 
 ### Limitaciones conocidas
+
+- Los navegadores bloquean por defecto las pestañas que no abre un click. La primera vez hay que permitir las ventanas emergentes del sitio; mientras tanto, el widget muestra enlaces de respaldo.
+- La elección de la película para el póster y los enlaces es heurística: si la respuesta menciona varias, puede elegir la que no es.
 
 - El filtro de patrones es heurístico: una paráfrasis creativa puede pasarlo. Por eso es la primera de varias capas, no la única.
 - El filtro de salida detecta copias literales, no paráfrasis del prompt. Mitigación: el prompt no tiene nada sensible.

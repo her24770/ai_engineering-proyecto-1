@@ -22,3 +22,13 @@
   color: var(--agichat-color-secondary, #14142b);
   padding-left: 0.25rem;
 }
+
+.agichat-bubble__poster {
+  display: block;
+  width: 100%;
+  max-width: 12rem;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+  background: var(--agichat-color-border, #e5e7eb);
+}
