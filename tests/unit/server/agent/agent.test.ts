@@ -88,6 +88,96 @@ describe("runAgent", () => {
     expect(outputs).toEqual(["Hecho.", "Hecho.", "Rechazado: dominio no permitido."]);
   });
 
+  it("rescata show_poster escrito como texto por el modelo y lo quita de la respuesta", async () => {
+    const { events } = await run("recomiéndame una película", [
+      {
+        content:
+          'Te recomiendo Blade Runner.\n\n🎞️ Póster\n<|show_poster|{"url":"https://image.tmdb.org/t/p/w500/p.jpg"}|>\n\n¿Algo más?',
+      },
+    ]);
+    expect(events).toEqual([
+      { type: "poster", url: "https://image.tmdb.org/t/p/w500/p.jpg" },
+      { type: "delta", text: "Te recomiendo Blade Runner.\n\n¿Algo más?" },
+    ]);
+  });
+
+  it("rescata open_url escrito como texto, pero rechaza dominios no permitidos", async () => {
+    const { events } = await run("ábrelo", [
+      {
+        content:
+          'Listo <|open_url|{"url":"https://www.imdb.com/title/tt1/"}|> <|open_url|{"url":"https://evil.com"}|>',
+      },
+    ]);
+    expect(events).toEqual([
+      { type: "open-url", url: "https://www.imdb.com/title/tt1/" },
+      { type: "delta", text: "Listo" },
+    ]);
+  });
+
+  it("rescata la forma <show_poster url=...> y la quita de la respuesta", async () => {
+    const { events } = await run("muestra el póster", [
+      {
+        content:
+          'Aquí tienes el póster:\n\n<show_poster url="https://image.tmdb.org/t/p/w500/c.jpg">\n\n¿Abro IMDb? <open_url url="https://evil.com"></open_url>',
+      },
+    ]);
+    expect(events).toEqual([
+      { type: "poster", url: "https://image.tmdb.org/t/p/w500/c.jpg" },
+      { type: "delta", text: "Aquí tienes el póster:\n\n¿Abro IMDb?" },
+    ]);
+  });
+
+  it("rescata una llamada con formato inventado (commentary to=functions.show_poster)", async () => {
+    const { events } = await run("recomienda una película", [
+      {
+        content:
+          'Blade Runner es genial.\n\n📽️ Póster\n<commentary to=functions.show_poster <|constrain|>json<|message|>{"url":"https://image.tmdb.org/t/p/w500/p.jpg"}',
+      },
+    ]);
+    expect(events).toEqual([
+      { type: "poster", url: "https://image.tmdb.org/t/p/w500/p.jpg" },
+      { type: "delta", text: "Blade Runner es genial." },
+    ]);
+  });
+
+  it("muestra el póster de la película recomendada aunque el modelo no llame a show_poster", async () => {
+    const movies = vi.fn(async () =>
+      JSON.stringify({
+        movies: [
+          { title: "Dune", year: "2021", poster_url: "https://image.tmdb.org/t/p/w500/d21.jpg" },
+          { title: "Blade Runner", year: "1982", poster_url: "https://image.tmdb.org/t/p/w500/br82.jpg" },
+          { title: "Blade Runner 2049", year: "2017", poster_url: "https://image.tmdb.org/t/p/w500/br49.jpg" },
+        ],
+      }),
+    );
+    const { llm } = scriptedLlm([
+      { content: null, tool_calls: [call("search_movie", { query: "blade runner" })] },
+      { content: "Te recomiendo Blade Runner (1982), un clásico." },
+    ]);
+    const events: AgentEvent[] = [];
+    await runAgent(
+      [{ role: "user", content: "recomienda ciencia ficción" }],
+      { llm, tools: { specs: tools.specs, call: movies } },
+      (e) => events.push(e),
+    );
+    expect(events).toEqual([
+      { type: "poster", url: "https://image.tmdb.org/t/p/w500/br82.jpg" },
+      { type: "delta", text: "Te recomiendo Blade Runner (1982), un clásico." },
+    ]);
+  });
+
+  it("no duplica el póster si el modelo sí llamó a show_poster", async () => {
+    const { events } = await run("recomienda", [
+      { content: null, tool_calls: [call("search_movie", { query: "dune" })] },
+      {
+        content: null,
+        tool_calls: [call("show_poster", { url: "https://image.tmdb.org/t/p/w500/x.jpg" })],
+      },
+      { content: "Te recomiendo Dune." },
+    ]);
+    expect(events.filter((e) => e.type === "poster")).toHaveLength(1);
+  });
+
   it("devuelve errores de herramientas al LLM y tolera argumentos inválidos", async () => {
     const bad: ToolCall = {
       id: "x",
