@@ -207,3 +207,11 @@
 .agichat-markdown .hljs-addition {
   color: #8fd19e;
 }
+
+/* Si el modelo incluye el póster en Markdown, no debe ocupar todo el chat. */
+.agichat-markdown img {
+  display: block;
+  max-width: 12rem;
+  height: auto;
+  border-radius: 0.5rem;
+}

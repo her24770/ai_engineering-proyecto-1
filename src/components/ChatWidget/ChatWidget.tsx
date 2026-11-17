@@ -16,7 +16,8 @@ export interface ChatWidgetProps {
  * instanciar un `ChatTransport` (por ahora, `MockTransport`) y pasarlo aqui.
  */
 export function ChatWidget({ transport, title = "AGIChat" }: ChatWidgetProps) {
-  const { messages, isTyping, error, sendMessage } = useChat(transport);
+  const { messages, isTyping, error, blockedLinks, dismissBlockedLinks, sendMessage } =
+    useChat(transport);
 
   return (
     <div className="agichat-widget">
@@ -26,6 +27,22 @@ export function ChatWidget({ transport, title = "AGIChat" }: ChatWidgetProps) {
       {error && (
         <div className="agichat-widget__error" role="alert">
           {error}
+        </div>
+      )}
+      {blockedLinks.length > 0 && (
+        <div className="agichat-widget__blocked" role="status">
+          Tu navegador bloqueó la apertura automática. Ábrelo aquí:{" "}
+          {blockedLinks.map((link) => (
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={dismissBlockedLinks}
+            >
+              {link.label}
+            </a>
+          ))}
         </div>
       )}
       <InputBar onSend={sendMessage} />

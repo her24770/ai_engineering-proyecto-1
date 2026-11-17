@@ -28,3 +28,14 @@
   color: #b91c1c;
   font-size: 0.85rem;
 }
+
+.agichat-widget__blocked {
+  padding: 0 0.75rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.agichat-widget__blocked a {
+  margin-right: 0.5rem;
+  color: var(--agichat-color-primary);
+  font-weight: 600;
+}
