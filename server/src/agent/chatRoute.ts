@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { RouteHandler } from "../app.ts";
 import { runAgent } from "./agent.ts";
 import type { AgentDeps, AgentEvent } from "./agent.ts";
+import { LlmRateLimitError } from "./llm.ts";
 
 const MAX_BODY_BYTES = 64_000;
 
@@ -83,7 +84,10 @@ export function createChatHandler(deps: AgentDeps): RouteHandler {
       console.error("Error del agente:", err);
       send({
         type: "error",
-        error: "El agente no está disponible en este momento. Intenta de nuevo.",
+        error:
+          err instanceof LlmRateLimitError
+            ? "Hay muchas solicitudes en este momento. Espera unos segundos e intenta de nuevo."
+            : "El agente no está disponible en este momento. Intenta de nuevo.",
       });
     }
     res.end();

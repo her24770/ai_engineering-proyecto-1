@@ -9,6 +9,8 @@ describe("loadConfig", () => {
     expect(config.llmApiKey).toBeUndefined();
     expect(config.llmModel).toBe("openai/gpt-oss-120b");
     expect(config.llmBaseUrl).toBe("https://api.groq.com/openai/v1");
+    expect(config.llmReasoningEffort).toBe("low");
+    expect(loadConfig({ LLM_REASONING_EFFORT: "" }).llmReasoningEffort).toBeUndefined();
   });
 
   it("permite cambiar el modelo y la URL base del LLM", () => {

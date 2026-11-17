@@ -52,6 +52,7 @@ const llm = createLlm({
   apiKey: config.llmApiKey,
   model: config.llmModel,
   baseUrl: config.llmBaseUrl,
+  reasoningEffort: config.llmReasoningEffort,
 });
 
 const server = createApp(config, {

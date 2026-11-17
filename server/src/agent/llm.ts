@@ -30,30 +30,45 @@ export interface LlmOptions {
   apiKey: string | undefined;
   model: string;
   baseUrl: string;
+  /** `low`/`medium`/`high` en modelos de razonamiento (gpt-oss); undefined = no se envía. */
+  reasoningEffort?: string;
   fetch?: typeof fetch;
   /** Inyectable para tests. */
   sleep?: (ms: number) => Promise<void>;
 }
 
+/** El proveedor sigue limitando tras el reintento (cuota por minuto o diaria agotada). */
+export class LlmRateLimitError extends Error {}
+
 /** Espera máxima antes de reintentar un 429; si el proveedor pide más, se falla. */
-const MAX_RETRY_WAIT_MS = 10_000;
+const MAX_RETRY_WAIT_MS = 30_000;
 
 const defaultSleep = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Segundos a esperar según el proveedor: header `retry-after` o, si falta,
+ * el texto de Groq "Please try again in 16.37s" (o "1m2.5s").
+ */
+async function waitSeconds(res: Response): Promise<number> {
+  const header = Number(res.headers.get("retry-after"));
+  if (res.headers.has("retry-after") && Number.isFinite(header)) return header;
+  const match = /try again in (?:(\d+)m)?([\d.]+)s/.exec(await res.clone().text());
+  return match ? Number(match[1] ?? 0) * 60 + Number(match[2]) : 1;
+}
+
+/**
  * Decide si vale la pena reintentar una vez y cuánto esperar:
- * - 429: límite por minuto del free tier; se respeta `retry-after`.
+ * - 429: límite por minuto del free tier; se respeta lo que pida el proveedor.
  * - 400 `tool_use_failed`: el modelo generó una llamada a herramienta mal
  *   formada (ocurre de vez en cuando con modelos abiertos en Groq).
  */
 async function retryDelay(res: Response): Promise<number | null> {
   if (res.status === 429) {
-    const seconds = Number(res.headers.get("retry-after") ?? "1");
-    const ms = (Number.isFinite(seconds) ? seconds : 1) * 1000;
+    const ms = Math.round((await waitSeconds(res)) * 1000);
     return ms <= MAX_RETRY_WAIT_MS ? ms : null;
   }
-  if (res.status === 400 && (await res.text()).includes("tool_use_failed")) {
+  if (res.status === 400 && (await res.clone().text()).includes("tool_use_failed")) {
     return 0;
   }
   return null;
@@ -79,6 +94,7 @@ export function createLlm(options: LlmOptions): Llm {
         body: JSON.stringify({
           model: options.model,
           temperature: 0.3,
+          reasoning_effort: options.reasoningEffort,
           messages,
           tools:
             tools.length > 0
@@ -96,7 +112,10 @@ export function createLlm(options: LlmOptions): Llm {
       }
     }
     if (!res.ok) {
-      throw new Error(`El LLM respondió con estado ${res.status}`);
+      // El detalle solo llega al log del servidor (chatRoute nunca lo muestra al usuario).
+      const detail = (await res.text()).slice(0, 300);
+      const message = `El LLM respondió con estado ${res.status}: ${detail}`;
+      throw res.status === 429 ? new LlmRateLimitError(message) : new Error(message);
     }
     const data = (await res.json()) as { choices?: { message?: LlmReply }[] };
     const message = data.choices?.[0]?.message;

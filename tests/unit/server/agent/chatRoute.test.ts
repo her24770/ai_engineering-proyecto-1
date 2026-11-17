@@ -5,6 +5,7 @@ import { createApp, routeKey } from "../../../../server/src/app.ts";
 import { loadConfig } from "../../../../server/src/config.ts";
 import { createChatHandler } from "../../../../server/src/agent/chatRoute.ts";
 import type { SseEvent } from "../../../../server/src/agent/chatRoute.ts";
+import { LlmRateLimitError } from "../../../../server/src/agent/llm.ts";
 import type { Llm } from "../../../../server/src/agent/llm.ts";
 
 let server: Server;
@@ -66,6 +67,21 @@ describe("POST /api/chat", () => {
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe("error");
     expect(JSON.stringify(events)).not.toContain("LLM_API_KEY");
+    spy.mockRestore();
+  });
+
+  it("avisa que espere si el LLM sigue limitando por cuota", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await start(async () => {
+      throw new LlmRateLimitError("429");
+    });
+    const res = await post(
+      JSON.stringify({ messages: [{ role: "user", content: "hola" }] }),
+    );
+    expect(parseSse(await res.text())[0]).toEqual({
+      type: "error",
+      error: expect.stringMatching(/Espera unos segundos/),
+    });
     spy.mockRestore();
   });
 

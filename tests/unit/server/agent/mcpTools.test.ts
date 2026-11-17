@@ -3,7 +3,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { createMcpExecutor } from "../../../../server/src/agent/mcpTools.ts";
+import {
+  compactToolOutput,
+  createMcpExecutor,
+} from "../../../../server/src/agent/mcpTools.ts";
 
 /** MCP server de prueba en memoria, con la misma forma que el de TMDB. */
 async function connectFakeServer(): Promise<Client> {
@@ -68,5 +71,36 @@ describe("createMcpExecutor", () => {
     const executor = await createMcpExecutor([]);
     expect(executor.specs).toEqual([]);
     await expect(executor.call("nada", {})).rejects.toThrow(/desconocida/);
+  });
+});
+
+describe("compactToolOutput", () => {
+  it("limita listas a 5 elementos y textos a 300 caracteres, en cualquier nivel", () => {
+    const raw = JSON.stringify({
+      page: 1,
+      results: Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        overview: "x".repeat(1000),
+      })),
+    });
+    const compact = JSON.parse(compactToolOutput(raw));
+    expect(compact.page).toBe(1);
+    expect(compact.results).toHaveLength(5);
+    expect(compact.results[0].overview).toBe(`${"x".repeat(300)}…`);
+  });
+
+  it("deja intactas las respuestas pequeñas y recorta texto no JSON demasiado largo", () => {
+    expect(compactToolOutput('{"found":false}')).toBe('{"found":false}');
+    expect(compactToolOutput("hola")).toBe("hola");
+    expect(compactToolOutput("y".repeat(5000))).toHaveLength(4001);
+  });
+
+  it("aplica el recorte también al JSON que sigue siendo grande", () => {
+    const wide = JSON.stringify(
+      Object.fromEntries(
+        Array.from({ length: 50 }, (_, i) => [`k${i}`, "z".repeat(200)]),
+      ),
+    );
+    expect(compactToolOutput(wide).length).toBe(4001);
   });
 });

@@ -1,4 +1,4 @@
-import { createLlm } from "../../../../server/src/agent/llm.ts";
+import { LlmRateLimitError, createLlm } from "../../../../server/src/agent/llm.ts";
 import type { LlmOptions } from "../../../../server/src/agent/llm.ts";
 
 function reply(status: number, body: unknown, headers: Record<string, string> = {}) {
@@ -76,6 +76,39 @@ describe("createLlm", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("si no hay retry-after, lee la espera del mensaje de Groq", async () => {
+    const groq429 = {
+      error: {
+        message: "Rate limit reached... Please try again in 16.37s. Need more tokens?",
+      },
+    };
+    const { llm, sleep } = llmWith(fakeFetch(reply(429, groq429), reply(200, OK)));
+    await llm([], []);
+    expect(sleep).toHaveBeenCalledWith(16370);
+  });
+
+  it("entiende esperas con minutos y descarta las que superan el máximo", async () => {
+    const msg = { error: { message: "Please try again in 1m2.5s." } };
+    const fetchMock = fakeFetch(reply(429, msg));
+    const { llm, sleep } = llmWith(fetchMock);
+    await expect(llm([], [])).rejects.toThrow(/429/);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("envía reasoning_effort solo si está configurado", async () => {
+    const withEffort = fakeFetch(reply(200, OK));
+    await llmWith(withEffort, { reasoningEffort: "low" }).llm([], []);
+    expect(JSON.parse(withEffort.mock.calls[0][1]?.body as string).reasoning_effort).toBe(
+      "low",
+    );
+
+    const without = fakeFetch(reply(200, OK));
+    await llmWith(without).llm([], []);
+    expect(JSON.parse(without.mock.calls[0][1]?.body as string)).not.toHaveProperty(
+      "reasoning_effort",
+    );
+  });
+
   it("usa 1 s si retry-after falta o no es un número", async () => {
     const { llm, sleep } = llmWith(
       fakeFetch(reply(429, {}, { "retry-after": "pronto" }), reply(200, OK)),
@@ -104,7 +137,7 @@ describe("createLlm", () => {
   it("reintenta solo una vez", async () => {
     const fetchMock = fakeFetch(reply(429, {}), reply(429, {}));
     const { llm } = llmWith(fetchMock);
-    await expect(llm([], [])).rejects.toThrow(/429/);
+    await expect(llm([], [])).rejects.toBeInstanceOf(LlmRateLimitError);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

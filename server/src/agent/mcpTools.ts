@@ -13,6 +13,45 @@ interface ToolResultLike {
   isError?: unknown;
 }
 
+/** Presupuesto por resultado: el free tier de Groq permite ~8k tokens/min en total. */
+const MAX_LIST_ITEMS = 5;
+const MAX_STRING_CHARS = 300;
+const MAX_OUTPUT_CHARS = 4000;
+
+function shrink(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.length > MAX_STRING_CHARS
+      ? `${value.slice(0, MAX_STRING_CHARS)}…`
+      : value;
+  }
+  if (Array.isArray(value)) {
+    return value.slice(0, MAX_LIST_ITEMS).map(shrink);
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, shrink(item)]),
+    );
+  }
+  return value;
+}
+
+/**
+ * Recorta lo que devuelve una herramienta antes de enviarlo al LLM: máximo
+ * 5 elementos por lista y 300 caracteres por texto. Así el agente no depende
+ * de que cada MCP server devuelva respuestas compactas.
+ */
+export function compactToolOutput(text: string): string {
+  let compact: string;
+  try {
+    compact = JSON.stringify(shrink(JSON.parse(text)));
+  } catch {
+    compact = text;
+  }
+  return compact.length > MAX_OUTPUT_CHARS
+    ? `${compact.slice(0, MAX_OUTPUT_CHARS)}…`
+    : compact;
+}
+
 function resultToText(result: ToolResultLike): string {
   let text: string;
   if (result.structuredContent !== undefined) {
@@ -26,7 +65,8 @@ function resultToText(result: ToolResultLike): string {
   } else {
     text = "";
   }
-  return result.isError ? `ERROR: ${text}` : text;
+  const compact = compactToolOutput(text);
+  return result.isError ? `ERROR: ${compact}` : compact;
 }
 
 /**

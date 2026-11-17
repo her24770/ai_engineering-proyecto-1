@@ -6,6 +6,7 @@ export interface ServerConfig {
   llmApiKey: string | undefined;
   llmModel: string;
   llmBaseUrl: string;
+  llmReasoningEffort: string | undefined;
   tmdbApiKey: string | undefined;
   googleBooksApiKey: string | undefined;
 }
@@ -38,6 +39,9 @@ export function loadConfig(env: Env): ServerConfig {
     llmApiKey: env.LLM_API_KEY || undefined,
     llmModel: env.LLM_MODEL || "openai/gpt-oss-120b",
     llmBaseUrl: (env.LLM_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, ""),
+    // "low" por defecto: en gpt-oss reduce ~70 % los tokens (clave con 8k tokens/min).
+    // Vacío = no se envía (para modelos sin razonamiento, p. ej. gpt-4o-mini).
+    llmReasoningEffort: (env.LLM_REASONING_EFFORT ?? "low") || undefined,
     tmdbApiKey: env.TMDB_API_KEY || undefined,
     googleBooksApiKey: env.GOOGLE_BOOKS_API_KEY || undefined,
   };
