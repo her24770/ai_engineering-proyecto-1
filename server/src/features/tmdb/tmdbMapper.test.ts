@@ -7,7 +7,7 @@ import {
   mapMovie,
   mapMovieDetails,
   mapMovies
-} from "./tmdbMapper.ts;
+} from "./tmdbMapper.ts";
 import type { TmdbMovie, TmdbMovieDetails } from "./tmdbClient.ts";
 
 const movie: TmdbMovie = {

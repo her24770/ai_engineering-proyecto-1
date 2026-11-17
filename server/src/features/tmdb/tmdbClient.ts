@@ -1,5 +1,8 @@
 // Cliente HTTP para TMDB. No depende del SDK MCP ni expone credenciales al frontend.
 
+import { createMemoryCache } from "./tmdbCache.ts";
+import { createDailyQuota } from "./tmdbRequestLimit.ts";
+
 export interface TmdbMovie {
   id: number;
   title: string;
@@ -19,6 +22,18 @@ export interface TmdbMovieDetails extends TmdbMovie {
   genres: Array<{ id: number; name: string }>;
   poster_url: string | null;
   imdb_url: string | null;
+}
+
+export interface TmdbRecommendedMovie {
+  id: number;
+  title: string;
+  overview: string;
+  release_date: string;
+  poster_url: string | null;
+}
+
+export interface TmdbRecommendations {
+  movies: TmdbRecommendedMovie[];
 }
 
 export type RecommendationFilter =
@@ -112,16 +127,47 @@ function getImdbUrl(imdbId: string | null): string | null {
   return `https://www.imdb.com/title/${imdbId}/`;
 }
 
-export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) {
+export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch, dailyLimit = 1000) {
   if (!apiKey.trim()) {
     throw new Error("Falta la API key de TMDB");
   }
 
-  async function requestTmdb(
+  const cache = createMemoryCache<unknown>(
+    15 * 60 * 1000
+  );
+
+  const quota = createDailyQuota(dailyLimit);
+
+
+  async function requestTmdb<T>(
     path: string,
-    params: Record<string, string> = {}
-  ): Promise<unknown> {
-    const url = new URL(path, "https://api.themoviedb.org");
+    params: Record<string, string>,
+    validate: (data: unknown) => data is T,
+    invalidMessage: string
+  ): Promise<T> {
+
+
+    const cacheKey = JSON.stringify([
+      path,
+      "es-ES",
+      Object.entries(params).sort(([a], [b]) =>
+        a.localeCompare(b)
+      )
+    ]);
+
+    const cached = cache.get(cacheKey);
+
+
+    if (cached.hit && validate(cached.value)) {
+      return cached.value;
+    }
+    quota.consume();
+
+    const url = new URL(
+      path,
+      "https://api.themoviedb.org"
+    );
+
     url.searchParams.set("api_key", apiKey);
     url.searchParams.set("language", "es-ES");
 
@@ -129,21 +175,43 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
       url.searchParams.set(key, value);
     }
 
+    //Realizar solicitud HTTP.
     const response = await fetchFn(url.toString(), {
       signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
       if (response.status === 429) {
-        throw new Error("TMDB: límite de solicitudes alcanzado");
+        throw new Error(
+          "TMDB: límite de solicitudes alcanzado"
+        );
       }
+
       if (response.status === 401) {
-        throw new Error("TMDB: credencial no autorizada");
+        throw new Error(
+          "TMDB: credencial no autorizada"
+        );
       }
-      throw new Error(`TMDB respondió con HTTP ${response.status}`);
+
+      if (response.status === 404) {
+        throw new Error(
+          "TMDB: recurso no encontrado"
+        );
+      }
+
+      throw new Error(
+        `TMDB respondió con HTTP ${response.status}`
+      );
     }
 
     const data: unknown = await response.json();
+
+    if (!validate(data)) {
+      throw new Error(invalidMessage);
+    }
+
+    cache.set(cacheKey, data);
+
     return data;
   }
 
@@ -153,14 +221,16 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
         throw new Error("El título de la película es obligatorio");
       }
 
-      const data = await requestTmdb("/3/search/movie", {
-        query: query.trim(),
-        include_adult: "false"
-      });
+      const data = await requestTmdb(
+        "/3/search/movie",
+        {
+          query: query.trim(),
+          include_adult: "false"
+        },
+        isSearchResponse,
+        "TMDB devolvió una respuesta inválida"
+      );
 
-      if (!isSearchResponse(data)) {
-        throw new Error("TMDB devolvió una respuesta inválida");
-      }
       return data;
     },
 
@@ -169,11 +239,12 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
         throw new Error("El ID de la película debe ser un entero positivo");
       }
 
-      const data = await requestTmdb(`/3/movie/${movieId}`);
-
-      if (!isMovieDetailsResponse(data)) {
-        throw new Error("TMDB devolvió detalles inválidos");
-      }
+      const data = await requestTmdb(
+        `/3/movie/${movieId}`,
+        {},
+        isMovieDetailsResponse,
+        "TMDB devolvió detalles inválidos"
+      );
 
       return {
         ...data,
@@ -182,9 +253,10 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
       };
     },
 
+
     async getRecommendations(
       filter: RecommendationFilter
-    ): Promise<TmdbSearchResponse> {
+    ): Promise<TmdbRecommendations> {
       let path: string;
       const params: Record<string, string> = { include_adult: "false" };
 
@@ -194,7 +266,8 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
         }
         path = `/3/movie/${filter.movieId}/recommendations`;
       } else if (typeof filter.genre === "string" && filter.genre.trim()) {
-        const genresData = await requestTmdb("/3/genre/movie/list");
+        const genresData = await requestTmdb("/3/genre/movie/list", {}, isGenresResponse, "TMDB devolvió una lista de géneros inválida"
+        );
         if (!isGenresResponse(genresData)) {
           throw new Error("TMDB devolvió una lista de géneros inválida");
         }
@@ -214,11 +287,19 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch) 
         throw new Error("Debe proporcionar movieId o genre");
       }
 
-      const data = await requestTmdb(path, params);
+      const data = await requestTmdb(path, params, isSearchResponse, "TMDB devolvió recomendaciones inválidas");
       if (!isSearchResponse(data)) {
         throw new Error("TMDB devolvió recomendaciones inválidas");
       }
-      return data;
+      return {
+        movies: data.results.map((movie) => ({
+          id: movie.id,
+          title: movie.title,
+          overview: movie.overview,
+          release_date: movie.release_date,
+          poster_url: getPosterUrl(movie.poster_path)
+        }))
+      };
     }
   };
 }

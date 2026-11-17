@@ -3,6 +3,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { createTmdbClient } from "./tmdbClient.ts";
 
+
+
 const movie = {
   id: 157336,
   title: "Interstellar",
@@ -175,7 +177,17 @@ describe("Cliente HTTP de TMDB", () => {
 
       const result = await client.getRecommendations({ movieId: 157336 });
 
-      expect(result.results).toEqual([recommended]);
+      expect(result.movies).toEqual([
+        {
+          id: recommended.id,
+          title: recommended.title,
+          overview: recommended.overview,
+          release_date: recommended.release_date,
+          poster_url: recommended.poster_path
+            ? `https://image.tmdb.org/t/p/w500${recommended.poster_path}`
+            : null
+        }
+      ]);
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const url = new URL(String(mockFetch.mock.calls[0]?.[0]));
       expect(url.pathname).toBe("/3/movie/157336/recommendations");
@@ -205,7 +217,17 @@ describe("Cliente HTTP de TMDB", () => {
         genre: "  CIENCIA FICCION  "
       });
 
-      expect(result.results).toEqual([movie]);
+      expect(result.movies).toEqual([
+        {
+          id: movie.id,
+          title: movie.title,
+          overview: movie.overview,
+          release_date: movie.release_date,
+          poster_url: movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : null
+        }
+      ]);
       expect(mockFetch).toHaveBeenCalledTimes(2);
       const catalogUrl = new URL(String(mockFetch.mock.calls[0]?.[0]));
       const discoverUrl = new URL(String(mockFetch.mock.calls[1]?.[0]));
@@ -285,18 +307,20 @@ describe("Cliente HTTP de TMDB", () => {
       );
     });
 
-    it.each([404, 500, 503])(
-      "informa el estado HTTP %s",
-      async (status) => {
-        const client = createTmdbClient(
-          "fake-api-key",
-          mockJsonFetch({}, status)
-        );
-        await expect(client.searchMovie("Dune")).rejects.toThrow(
-          `TMDB respondió con HTTP ${status}`
-        );
-      }
-    );
+    it.each([
+      [404, "TMDB: recurso no encontrado"],
+      [500, "TMDB respondió con HTTP 500"],
+      [503, "TMDB respondió con HTTP 503"]
+    ])("informa el estado HTTP %i", async (status, message) => {
+      const client = createTmdbClient(
+        "fake-api-key",
+        mockJsonFetch({}, status)
+      );
+
+      await expect(
+        client.searchMovie("Dune")
+      ).rejects.toThrow(message);
+    });
 
     it("propaga un fallo de red sin ocultarlo", async () => {
       const mockFetch = vi.fn<typeof fetch>(async () => {
@@ -309,4 +333,40 @@ describe("Cliente HTTP de TMDB", () => {
       );
     });
   });
+
+
+  describe("caché y cuota diaria", () => {
+    it("consume cuota solo en solicitudes reales a TMDB", async () => {
+      const mockFetch = mockJsonFetch({ results: [] });
+
+      const client = createTmdbClient(
+        "fake-api-key",
+        mockFetch,
+        2
+      );
+
+      await client.searchMovie("Interstellar");
+      await client.searchMovie("Interstellar");
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      await client.searchMovie("Dune");
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      await expect(
+        client.searchMovie("Arrival")
+      ).rejects.toThrow(
+        "TMDB: se agotó el límite de solicitudes diarias"
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      const cached = await client.searchMovie("Interstellar");
+
+      expect(cached.results).toEqual([]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
 });
