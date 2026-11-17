@@ -15,12 +15,12 @@ flowchart LR
     subgraph VPS["Servidor propio (Ubuntu + Docker)"]
         Nginx["nginx del host<br/>TLS wildcard"] -->|"/  → :3230"| Web["agichat_web<br/>Caddy: widget estático"]
         Nginx -->|"/api/* /health → :3231"| Server["agichat_server<br/>Node: agente + MCP"]
-        Env[(".env<br/>API keys")] -.-> Server
+        Env[(".env<br/>Secretos / Keys")] -.-> Server
     end
 
-    Server --> LLM[(Groq LLM)]
-    Server --> TMDB[(TMDB)]
-    Server --> Books[(Google Books)]
+    Server --> LLM["Servicio LLM: Groq / OpenAI<br/>(Inferencia REST HTTP)"]
+    Server --> TMDB["API Externa: The Movie Database<br/>(Películas y Pósters)"]
+    Server --> Books["API Externa: Google Books<br/>(Catálogo de Libros)"]
 ```
 
 ### Por qué escala
@@ -34,25 +34,25 @@ flowchart LR
 
 Sigue el esquema del servidor (`estructura.md`):
 
-| Elemento | Valor |
-|---|---|
-| Dominio | `agichat.jhgo.online` |
-| Directorio | `/home/nandez/projects/ia/agichat/` |
-| Contenedores | `agichat_server`, `agichat_web` |
-| Red | `agichat_net` |
-| Puertos (solo `127.0.0.1`) | `3230` → web, `3231` → server |
-| Nginx | `/etc/nginx/sites-enabled/agichat` (copia de `infra/nginx/agichat.conf`) |
-| Base de datos | Ninguna |
+| Elemento                   | Valor                                                                    |
+| -------------------------- | ------------------------------------------------------------------------ |
+| Dominio                    | `agichat.jhgo.online`                                                    |
+| Directorio                 | `/home/nandez/projects/ia/agichat/`                                      |
+| Contenedores               | `agichat_server`, `agichat_web`                                          |
+| Red                        | `agichat_net`                                                            |
+| Puertos (solo `127.0.0.1`) | `3230` → web, `3231` → server                                            |
+| Nginx                      | `/etc/nginx/sites-enabled/agichat` (copia de `infra/nginx/agichat.conf`) |
+| Base de datos              | Ninguna                                                                  |
 
 El TLS lo hacen Cloudflare y el nginx del host (certificado wildcard). Los contenedores **no** abren 80 ni 443.
 
 ## API keys: qué se necesita y quién las pone
 
-| Secreto | Dónde vive | Quién la crea | Para qué |
-|---|---|---|---|
-| `LLM_API_KEY` | `.env` del servidor (y `.env` local de quien desarrolla el agente) | Un miembro del grupo. API key de Groq (console.groq.com), **free tier sin tarjeta**. `LLM_MODEL` y `LLM_BASE_URL` tienen defaults para Groq | LLM del agente |
-| `TMDB_API_KEY` | igual | Cualquiera: themoviedb.org → Settings → API. Declarar **estudiantes del curso CC3116 de la UVG, uso no comercial** | Películas y pósters |
-| `GOOGLE_BOOKS_API_KEY` | igual | Google Cloud Console → proyecto → habilitar Books API → credencial. **Sin tarjeta de crédito**: no activar la prueba gratuita de Cloud | Libros |
+| Secreto                | Dónde vive                                                         | Quién la crea                                                                                                                               | Para qué            |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `LLM_API_KEY`          | `.env` del servidor (y `.env` local de quien desarrolla el agente) | Un miembro del grupo. API key de Groq (console.groq.com), **free tier sin tarjeta**. `LLM_MODEL` y `LLM_BASE_URL` tienen defaults para Groq | LLM del agente      |
+| `TMDB_API_KEY`         | igual                                                              | Cualquiera: themoviedb.org → Settings → API. Declarar **estudiantes del curso CC3116 de la UVG, uso no comercial**                          | Películas y pósters |
+| `GOOGLE_BOOKS_API_KEY` | igual                                                              | Google Cloud Console → proyecto → habilitar Books API → credencial. **Sin tarjeta de crédito**: no activar la prueba gratuita de Cloud      | Libros              |
 
 Las keys **nunca** van en GitHub ni en el repo: solo en el `.env` del servidor. Para trabajar en local, cada quien copia `.env.example` a `.env` con sus propias keys gratuitas (o usa las herramientas simuladas de los tests, que no necesitan keys). `.env` está en `.gitignore`.
 

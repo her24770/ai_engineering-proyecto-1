@@ -1,121 +1,138 @@
 # Estructura de carpetas del proyecto
 
-Guía de referencia rápida para saber **dónde colocar** cada artefacto nuevo en el repositorio. Para el razonamiento arquitectónico detrás de esta organización, consulta [ARQUITECTURA.md](./ARQUITECTURA.md).
+Guía de referencia rápida para saber **dónde colocar** cada artefacto en el repositorio y entender la distribución física del sistema AGIChat (Fase 2). Para el razonamiento arquitectónico detrás de esta organización, consulta [ARQUITECTURA.md](./ARQUITECTURA.md).
 
 ---
 
-## Árbol conceptual
+## Árbol conceptual del repositorio
 
 ```
 ai_engineering-proyecto-1/
-├── .github/              # CI y plantilla de PR
-├── demo/                 # Punto de composición para desarrollo local
-├── docs/                 # Documentación técnica del equipo
-├── evals/                # Evaluaciones funcionales y de seguridad (LLM01, LLM07)
-├── infra/                # Configuración de despliegue (nginx, etc.)
-├── server/
-│   ├── src/              # Backend Node (app, endpoints, rate limiter, config)
-│   └── mcp/              # Servidores y contratos MCP
-│       ├── contracts.ts  # Contratos tipados compartidos de las herramientas MCP
-│       ├── tmdb/         # Servidor MCP para The Movie Database
-│       └── books/        # Servidor MCP para Google Books
-├── src/
-│   ├── index.ts          # Superficie pública del SDK (re-exportaciones)
-│   ├── components/       # Componentes React de presentación
-│   ├── markdown/         # Render y sanitización de Markdown
-│   ├── state/            # Hooks y lógica de estado
-│   ├── transport/
-│   │   ├── ChatTransport.ts   # Puerto (interfaz pública)
-│   │   ├── mock/              # Adaptador simulado (Proyecto 1)
-│   │   └── agent/             # Adaptador real hacia /api/chat (Proyecto 2)
-│   └── types/            # Tipos compartidos entre capas
-├── tests/
-│   └── unit/             # Pruebas unitarias (espeja la estructura de src/ y server/)
-├── README.md             # Documentación para usuarios externos del SDK
-├── AGENTS.md             # Guía de implementación de agentes
-├── package.json
-└── vite.config.ts
+├── .github/                  # CI/CD (GitHub Actions) y plantilla de PR
+│   └── workflows/ci.yml      # Pipeline: typecheck → lint → test:coverage → build → docker-build
+├── demo/                     # Punto de composición y pruebas manuales del widget
+├── docs/                     # Documentación técnica completa del sistema
+│   ├── AGENTE.md             # Orquestador, especificación de chat SSE y defensas LLM
+│   ├── ARQUITECTURA.md       # Diagramas conceptual y técnico, justificación de escalabilidad
+│   ├── ESTRUCTURA_CARPETAS.md# Esta guía de referencia de carpetas
+│   ├── EVALS.md              # Batería de evaluaciones caja negra y reporte
+│   ├── INFRAESTRUCTURA.md    # Despliegue en VPS, Cloudflare, Docker y Nginx
+│   ├── mcpBooks.md           # Servidor MCP de Google Books
+│   ├── mcpTMDB.md            # Servidor MCP de The Movie Database
+│   └── REPARTO_TAREAS.md     # Acuerdos de equipo y asignación de componentes
+├── evals/                    # Suite de evaluaciones funcionales y de seguridad
+│   ├── cases.mjs             # Definición determinista de casos de prueba
+│   ├── evaluator.mjs         # Motor de aserciones sobre respuestas y eventos SSE
+│   ├── report.mjs            # Generador de reportes en Markdown y JSON
+│   ├── run.mjs               # Ejecutor CLI de la batería
+│   ├── sseClient.mjs         # Cliente HTTP / SSE para interactuar con /api/chat
+│   └── results/              # Resultados generados (latest.json, latest.md)
+├── infra/                    # Archivos de despliegue en servidor (Nginx, Caddy)
+├── server/                   # Backend Node.js y servidores de herramientas MCP
+│   ├── src/                  # Servidor de aplicación HTTP y lógica del agente
+│   │   ├── app.ts            # Servidor HTTP nativo con CORS y rate limiter por IP
+│   │   ├── config.ts         # Carga y validación estricta de variables de entorno
+│   │   ├── index.ts          # Entrypoint del backend; conecta MCPs y levanta puerto 3000
+│   │   ├── rateLimiter.ts    # Control de tasa de peticiones por IP en memoria
+│   │   └── agent/            # Módulo del agente de inteligencia artificial
+│   │       ├── agent.ts      # Orquestador ReAct; bucle de llamadas a herramientas
+│   │       ├── chatRoute.ts  # Manejador POST /api/chat con streaming SSE
+│   │       ├── guardrails.ts # Defensas OWASP LLM01 (inyección) y LLM07 (fuga prompt)
+│   │       ├── llm.ts        # Cliente agnóstico a APIs compatibles con OpenAI (Groq)
+│   │       ├── mcpTools.ts   # Conector y ejecutor de herramientas MCP
+│   │       └── systemPrompt.ts # Prompt del sistema con token canario
+│   └── mcp/                  # Servidores MCP independientes
+│       ├── contracts.ts      # Contratos e interfaces tipadas compartidas
+│       ├── books/            # MCP Server Google Books (Persona 3)
+│       │   ├── googleBooksClient.ts # Cliente HTTP con caché LRU y cuota diaria
+│       │   ├── matcher.ts    # Heurística película-libro y sanitización LLM01
+│       │   ├── server.ts     # Registro de herramienta search_book en McpServer
+│       │   └── index.ts      # Entrypoint stdio ejecutable
+│       └── tmdb/             # MCP Server TMDB (Persona 2)
+│           ├── mcpServer.ts  # Registro de search_movie, get_movie_details, etc.
+│           ├── stdio.ts      # Entrypoint stdio ejecutable
+│           ├── index.ts      # Re-exportación para resolución estándar
+│           ├── tmdbCache.ts  # Caché en memoria de consultas
+│           ├── tmdbClient.ts # Cliente HTTP de la API de TMDB
+│           ├── tmdbMapper.ts # Transformación a contratos compartidos
+│           └── tmdbRequestLimit.ts # Control de cuota diaria (1,000 req/día)
+├── src/                      # SDK Frontend del Widget de Chat (React + TypeScript)
+│   ├── index.ts              # Superficie pública exportada del SDK
+│   ├── components/           # Componentes visuales puros (React + CSS)
+│   │   ├── ChatWidget/       # Contenedor principal del widget
+│   │   ├── EmptyState/       # Estado inicial de bienvenida
+│   │   ├── InputBar/         # Barra de captura de texto y envío
+│   │   ├── MessageBubble/    # Burbuja de mensaje con soporte de póster
+│   │   ├── MessageList/      # Contenedor scrolleable de mensajes
+│   │   └── TypingIndicator/  # Animación de escritura del agente
+│   ├── markdown/             # Renderizado y sanitización estricta de Markdown
+│   │   └── MarkdownContent.tsx # react-markdown + rehype-sanitize
+│   ├── state/                # Lógica de estado reactivo
+│   │   └── useChat.ts        # Hook principal desacoplado del transporte
+│   ├── transport/            # Capa de transporte (Arquitectura Hexagonal)
+│   │   ├── ChatTransport.ts  # Puerto (interfaz base obligatoria)
+│   │   ├── mock/             # Adaptador simulado para desarrollo local (Fase 1)
+│   │   └── agent/            # Adaptador real SSE contra /api/chat (Fase 2)
+│   │       └── AgentTransport.ts # Conexión SSE, eventos poster y open-url
+│   └── types/                # Tipos de dominio compartidos del SDK
+│       └── index.ts          # ChatMessage, ChatTransportEvent, roles, etc.
+├── tests/                    # Pruebas automatizadas (espejo de src/ y server/)
+│   ├── setup.ts              # Configuración global de Vitest y jest-dom
+│   └── unit/
+│       ├── components/       # Pruebas unitarias de componentes React
+│       ├── evals/            # Pruebas unitarias del motor de aserciones de evals
+│       ├── mcp/books/        # Pruebas unitarias del MCP de libros
+│       ├── server/           # Pruebas del servidor HTTP (app, config, rateLimiter)
+│       │   ├── agent/        # Pruebas de orquestador, guardrails, llm y chatRoute
+│       │   └── mcp/tmdb/     # Pruebas unitarias del MCP de TMDB
+│       ├── state/            # Pruebas unitarias del hook useChat
+│       └── transport/        # Pruebas del adaptador MockTransport y simulador
+├── .dockerignore
+├── .env.example              # Plantilla documentada de variables requeridas
+├── .gitignore
+├── AGENTS.md                 # Directrices para agentes de codificación y equipo
+├── Caddyfile                 # Configuración de proxy inverso web para Caddy
+├── docker-compose.yml        # Orquestación de contenedores web y server
+├── Dockerfile                # Construcción multi-stage (targets: server y web)
+├── eslint.config.js          # Reglas de estilo y linting
+├── package.json              # Dependencias y scripts del proyecto
+├── README.md                 # Documentación general y guía de bienvenida
+├── tsconfig.json             # Configuración TypeScript estricta (erasableSyntaxOnly)
+└── vite.config.ts            # Configuración de Vite y Vitest con cobertura
 ```
 
 ---
 
-## Responsabilidades
+## Responsabilidades por Capa y Módulo
 
-| Carpeta           | Responsabilidad                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `.github/`        | Pipeline de CI (lint, typecheck, pruebas, docker build) y plantilla de PR.                                                |
-| `demo/`           | Monta el widget con un adaptador concreto para desarrollo y demostración local.                                           |
-| `docs/`           | Documentación técnica del proyecto. `README.md` en la raíz cubre a usuarios externos del SDK.                             |
-| `evals/`          | Evaluaciones de calidad del agente y pruebas de seguridad contra ataques LLM01 y LLM07.                                   |
-| `infra/`          | Configuración de infraestructura (nginx, compose, etc.) para el despliegue.                                               |
-| `server/src/`     | Backend Node: servidor HTTP, endpoints (`/health`, `/api/chat`), rate limiting y configuración.                           |
-| `server/mcp/`     | Servidores MCP independientes (`tmdb/`, `books/`) y contratos compartidos (`contracts.ts`).                               |
-| `src/components/` | Componentes React de presentación pura. Reciben datos y callbacks como props; no conocen adaptadores concretos.           |
-| `src/markdown/`   | Conversión de Markdown a HTML seguro (`react-markdown` + `rehype-sanitize`).                                              |
-| `src/state/`      | Hooks que traducen eventos del transporte a estado React. Conocen `ChatTransport` pero no sus implementaciones concretas. |
-| `src/transport/`  | Contiene el puerto (`ChatTransport.ts`) y todos los adaptadores en subcarpetas propias (`mock/`, `agent/`).               |
-| `src/types/`      | Tipos de dominio compartidos del SDK. No importa de ninguna otra capa.                                                    |
-| `tests/unit/`     | Pruebas unitarias organizadas en subcarpetas que reflejan las de `src/` y `server/`.                                      |
-
----
-
-## Reglas de ubicación
-
-### Componentes React → `src/components/<NombreComponente>/`
-
-Componentes de presentación pura. Lógica de estado compleja va en un hook dentro de `src/state/`.
-
-### Hooks y estado → `src/state/`
-
-Hooks que gestionan estado derivado del transporte o de la interacción del usuario.
-
-### Transportes y adaptadores → `src/transport/<nombre>/`
-
-- `ChatTransport.ts` permanece en la raíz de `transport/`; es la interfaz, no una implementación.
-- Cada adaptador concreto vive en su propia subcarpeta: `mock/`, `agent/`, etc.
-
-### Servidor y endpoints → `server/src/`
-
-Servidor HTTP Node, configuración (`config.ts`), rate limiter y registro de endpoints de API (ej. `/api/chat`). Se ejecuta directamente con Node sin compilación previa (solo sintaxis borrable).
-
-### Servidores y herramientas MCP → `server/mcp/<nombre>/`
-
-Cada servidor MCP vive en su subcarpeta (`tmdb/`, `books/`). El archivo `contracts.ts` en la raíz de `server/mcp/` contiene los contratos tipados compartidos entre los servidores MCP y el agente.
-
-### Evaluaciones y seguridad → `evals/`
-
-Pruebas funcionales de los flujos del agente y baterías de ataque adversarial para OWASP LLM01 y LLM07.
-
-### Tipos compartidos → `src/types/`
-
-Tipos necesarios en más de una capa. Tipos locales a un único archivo pueden definirse en ese mismo archivo.
-
-### Markdown → `src/markdown/`
-
-Componentes y utilidades de conversión o sanitización de Markdown. Plugins adicionales de remark/rehype se agregan aquí.
-
-### Pruebas → `tests/unit/<capa>/`
-
-La subcarpeta replica la de `src/`. Ejemplo: pruebas de `src/state/useChat.ts` van en `tests/unit/state/`.
-
-### Documentación → `docs/`
-
-Documentos técnicos de alcance del proyecto: arquitectura, estructura, decisiones de diseño, guías de contribución.
+| Carpeta             | Responsabilidad                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/`          | Pipeline de CI automatizado: compilación de tipos, linter, pruebas con cobertura, build y docker build.                                 |
+| `demo/`             | Entorno local de demostración que permite alternar entre `AgentTransport`, `MockTransport` y `PreviewTransport`.                        |
+| `docs/`             | Documentación técnica profunda de arquitectura, agentes, infraestructura, herramientas MCP y reparto de tareas.                         |
+| `evals/`            | Batería determinista de pruebas de caja negra contra `/api/chat` para validar requerimientos funcionales y seguridad OWASP LLM01/LLM07. |
+| `infra/`            | Plantillas de configuración de servidor para Nginx y certificados TLS.                                                                  |
+| `server/src/`       | Aplicación backend Node.js: routing HTTP, rate limiting por IP, CORS y punto de entrada.                                                |
+| `server/src/agent/` | Inteligencia artificial centralizada: orquestador, cliente de LLM compatible con OpenAI/Groq, system prompt y filtros de seguridad.     |
+| `server/mcp/`       | Servidores MCP desacoplados (`tmdb/`, `books/`) y contratos unificados (`contracts.ts`).                                                |
+| `src/components/`   | Presentación pura en React. Reciben props y callbacks; desconocen adaptadores de transporte o APIs de backend.                          |
+| `src/markdown/`     | Sanitización rigurosa de Markdown a HTML para evitar XSS o inyecciones visuales maliciosas.                                             |
+| `src/state/`        | Hook reactivo `useChat` que expone la lista de mensajes, estado de envío y callbacks a la UI.                                           |
+| `src/transport/`    | Puerto `ChatTransport` y adaptadores desacoplados (`MockTransport` para desarrollo aislado, `AgentTransport` para producción).          |
+| `src/types/`        | Tipos TypeScript de dominio compartidos por todo el SDK.                                                                                |
+| `tests/unit/`       | Pruebas unitarias automatizadas con Vitest que garantizan una cobertura mínima del 80% en todas las capas.                              |
 
 ---
 
-## Reglas de dependencias
+## Reglas de Dependencias entre Módulos
 
-- `components/` y `state/` no importan adaptadores concretos (`mock/`, `agent/`, etc.).
-- Toda comunicación entre la UI y el origen de datos pasa por la interfaz `ChatTransport`.
-- `types/` no importa de ninguna otra carpeta de `src/`.
-- `src/index.ts` re-exporta únicamente los símbolos que forman parte de la API pública del SDK.
+Para preservar el desacoplamiento y la mantenibilidad del sistema:
 
----
-
-## Proyecto 2: adaptador real
-
-En el Proyecto 2 se incorporará `src/transport/agent/AgentTransport.ts` implementando la interfaz `ChatTransport` contra el agente real. Los detalles se definirán en el PR correspondiente; los componentes, hooks y tipos existentes no deberían requerir cambios.
+1. **La UI nunca importa adaptadores concretos:** `src/components/` y `src/state/` únicamente conocen la interfaz `ChatTransport`. La decisión de qué transporte instanciar se delega al punto de composición (`demo/main.tsx` o la aplicación cliente huésped).
+2. **Tipos del SDK aislados:** `src/types/` no depende de ninguna otra capa de `src/` ni del servidor.
+3. **Contratos MCP compartidos:** `server/mcp/contracts.ts` define los tipos de datos que intercambian los servidores MCP y el agente. Ningún servidor MCP debe depender de la UI del widget ni viceversa.
+4. **Ejecución directa en Node (`server/`):** El código del servidor se ejecuta directamente con Node.js sin paso de transpilación previa. Debe respetar la regla `erasableSyntaxOnly`: imports con extensión `.ts` explícita y ausencia total de `enum`, `namespace` o _parameter properties_.
+5. **Superficie pública estricta:** `src/index.ts` expone únicamente los artefactos públicos del SDK destinados a ser embebidos por clientes externos.
 
 ---
 
@@ -123,8 +140,6 @@ En el Proyecto 2 se incorporará `src/transport/agent/AgentTransport.ts` impleme
 
 Actualizar `docs/ESTRUCTURA_CARPETAS.md` cuando:
 
-- Cambie la responsabilidad de una carpeta principal.
-- Se agregue o elimine una capa o módulo arquitectónico.
-- Cambien los puntos de entrada, la interfaz `ChatTransport` u otras reglas de ubicación.
-
-**No es necesario actualizar** por cada componente, prueba o archivo que siga las convenciones existentes.
+- Se incorpore o elimine un módulo, servidor MCP o paquete dentro del repositorio.
+- Cambien los puntos de entrada del servidor, la interfaz `ChatTransport` o la ubicación de las pruebas unitarias.
+- Se refactorice la jerarquía de directorios de backend o frontend.
