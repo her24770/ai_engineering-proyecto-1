@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeHighlight from "rehype-highlight";
+import { isAllowedPosterUrl } from "./posterUrl";
 import "./MarkdownContent.css";
 
 export interface MarkdownContentProps {
@@ -29,6 +30,13 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight, [rehypeSanitize, sanitizeSchema]]}
+        components={{
+          // Solo imágenes de TMDB: cualquier otra se descarta.
+          img: ({ src, alt }) =>
+            isAllowedPosterUrl(typeof src === "string" ? src : undefined) ? (
+              <img src={src as string} alt={alt ?? ""} loading="lazy" />
+            ) : null,
+        }}
       >
         {content}
       </ReactMarkdown>
