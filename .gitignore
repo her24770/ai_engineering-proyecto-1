@@ -4,6 +4,8 @@ coverage
 .DS_Store
 *.local
 *.log
+evals/results/*.json
+evals/results/*.md
 
 # Secretos
 .env
