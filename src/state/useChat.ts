@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatTransport } from "../transport/ChatTransport";
+import { toSafeLink } from "../links/safeLinks";
+import type { SafeLink } from "../links/safeLinks";
 import type { ChatMessage } from "../types";
 
 export interface UseChatResult {
   messages: ChatMessage[];
   isTyping: boolean;
   error: string | null;
+  /** Enlaces que el navegador no dejó abrir solos (popup bloqueado). */
+  blockedLinks: SafeLink[];
+  dismissBlockedLinks: () => void;
   sendMessage: (content: string) => Promise<void>;
 }
 
@@ -17,6 +22,7 @@ export function useChat(transport: ChatTransport): UseChatResult {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blockedLinks, setBlockedLinks] = useState<SafeLink[]>([]);
   const transportRef = useRef(transport);
   transportRef.current = transport;
 
@@ -50,6 +56,21 @@ export function useChat(transport: ChatTransport): UseChatResult {
         case "typing":
           setIsTyping(event.isTyping);
           break;
+        case "open-url": {
+          const link = toSafeLink(event.url);
+          if (!link) break;
+          // Sin "noopener" en las features: con él `window.open` devuelve
+          // siempre null y no se podría saber si el popup fue bloqueado.
+          const opened = window.open(link.url, "_blank");
+          if (opened) {
+            opened.opener = null;
+          } else {
+            setBlockedLinks((prev) =>
+              prev.some((item) => item.url === link.url) ? prev : [...prev, link],
+            );
+          }
+          break;
+        }
         case "error":
           setError(event.error);
           break;
@@ -64,6 +85,7 @@ export function useChat(transport: ChatTransport): UseChatResult {
 
   const sendMessage = useCallback(async (content: string) => {
     setError(null);
+    setBlockedLinks([]);
     try {
       await transportRef.current.sendMessage(content);
     } catch (err) {
@@ -71,5 +93,7 @@ export function useChat(transport: ChatTransport): UseChatResult {
     }
   }, []);
 
-  return { messages, isTyping, error, sendMessage };
+  const dismissBlockedLinks = useCallback(() => setBlockedLinks([]), []);
+
+  return { messages, isTyping, error, blockedLinks, dismissBlockedLinks, sendMessage };
 }

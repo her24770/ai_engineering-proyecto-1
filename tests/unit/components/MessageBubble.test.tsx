@@ -43,4 +43,66 @@ describe("MessageBubble", () => {
     expect(document.querySelector("script")).toBeNull();
     expect(windowWithFlag.__xss).toBeUndefined();
   });
+
+  describe("póster", () => {
+    const TMDB_POSTER = "https://image.tmdb.org/t/p/w500/abc.jpg";
+
+    it("muestra el póster de un mensaje del agente", () => {
+      render(
+        <MessageBubble
+          message={makeMessage({ role: "agent", content: "Dune", posterUrl: TMDB_POSTER })}
+        />,
+      );
+      const img = screen.getByRole("img");
+      expect(img).toHaveAttribute("src", TMDB_POSTER);
+      expect(img).toHaveAttribute("alt");
+    });
+
+    it("no muestra pósters de hosts que no son TMDB", () => {
+      render(
+        <MessageBubble
+          message={makeMessage({
+            role: "agent",
+            content: "Dune",
+            posterUrl: "https://evil.example.com/p.jpg",
+          })}
+        />,
+      );
+      expect(screen.queryByRole("img")).toBeNull();
+    });
+
+    it("no muestra pósters por http ni URLs inválidas", () => {
+      const { rerender } = render(
+        <MessageBubble
+          message={makeMessage({
+            role: "agent",
+            posterUrl: "http://image.tmdb.org/t/p/w500/abc.jpg",
+          })}
+        />,
+      );
+      expect(screen.queryByRole("img")).toBeNull();
+
+      rerender(<MessageBubble message={makeMessage({ role: "agent", posterUrl: "no-es-url" })} />);
+      expect(screen.queryByRole("img")).toBeNull();
+    });
+
+    it("no muestra póster en mensajes del usuario", () => {
+      render(<MessageBubble message={makeMessage({ role: "user", posterUrl: TMDB_POSTER })} />);
+      expect(screen.queryByRole("img")).toBeNull();
+    });
+
+    it("permite imágenes Markdown de TMDB y descarta las de otros hosts", () => {
+      render(
+        <MessageBubble
+          message={makeMessage({
+            role: "agent",
+            content: `![ok](${TMDB_POSTER}) ![mal](https://tracker.example.com/x.png)`,
+          })}
+        />,
+      );
+      const images = screen.getAllByRole("img");
+      expect(images).toHaveLength(1);
+      expect(images[0]).toHaveAttribute("src", TMDB_POSTER);
+    });
+  });
 });

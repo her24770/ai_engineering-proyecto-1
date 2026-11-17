@@ -5,7 +5,7 @@ import {
   leaksSystemPrompt,
   wrapUntrusted,
 } from "../../../../server/src/agent/guardrails.ts";
-import { CANARY, SYSTEM_PROMPT } from "../../../../server/src/agent/systemPrompt.ts";
+import { CANARY, CAPABILITIES, SYSTEM_PROMPT } from "../../../../server/src/agent/systemPrompt.ts";
 
 describe("checkInput (LLM01)", () => {
   it.each([
@@ -64,6 +64,11 @@ describe("leaksSystemPrompt (LLM07)", () => {
     expect(leaksSystemPrompt(`Claro: ${line!.toUpperCase().replace(/ /g, "  ")}`)).toBe(
       true,
     );
+  });
+
+  it("permite anunciar las capacidades públicas aunque se copien tal cual", () => {
+    expect(leaksSystemPrompt(`Puedo ayudarte con esto:
+${CAPABILITIES}`)).toBe(false);
   });
 
   it("no marca respuestas normales", () => {
