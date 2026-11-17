@@ -76,7 +76,12 @@ export function allowedUrl(raw: unknown, hosts: readonly string[]): string | nul
     return null;
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-  if (!hosts.includes(url.hostname) || url.username || url.password) return null;
+  const hostname = url.hostname.toLowerCase();
+  const isAllowedHost =
+    hosts.includes(hostname) ||
+    (/^books\.google\.[a-z.]+$/.test(hostname) && hosts.includes("books.google.com"));
+
+  if (!isAllowedHost || url.username || url.password) return null;
   url.protocol = "https:";
   return url.href;
 }
