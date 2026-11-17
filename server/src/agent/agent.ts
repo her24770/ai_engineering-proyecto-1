@@ -7,7 +7,7 @@ import {
   wrapUntrusted,
 } from "./guardrails.ts";
 import type { ToolExecutor } from "./mcpTools.ts";
-import type { Llm, LlmMessage, ToolCall, ToolSpec } from "./openai.ts";
+import type { Llm, LlmMessage, ToolCall, ToolSpec } from "./llm.ts";
 import { SYSTEM_PROMPT } from "./systemPrompt.ts";
 
 /** Eventos que el agente emite hacia el widget (viajan por SSE). */

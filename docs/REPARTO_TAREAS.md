@@ -36,7 +36,7 @@ Todos dependen de esto. **La Persona 1 lo cierra en un PR corto antes de que arr
 
 **Widget:** `ChatTransport` gana un evento `{type: "open-url", url}`, y `ChatMessage` soporta un póster opcional. Es el único cambio permitido al contrato de la UI.
 
-**Variables de entorno:** `OPENAI_API_KEY`, `TMDB_API_KEY`, `GOOGLE_BOOKS_API_KEY` (ya están en `.env.example`).
+**Variables de entorno:** `LLM_API_KEY`, `TMDB_API_KEY`, `GOOGLE_BOOKS_API_KEY` (ya están en `.env.example`).
 
 ## Frentes
 
@@ -61,7 +61,7 @@ Entrega primero (desbloquea al resto):
 - Caché y límite diario, igual que TMDB. Tests con respuestas simuladas.
 
 ### 4. Agente y guardrails — `feat/agent-backend` (el más pesado)
-- Orquestador con OpenAI y tool use, conectado a los dos MCP. Empezar con herramientas simuladas para no bloquearse.
+- Orquestador con un LLM (Groq, API compatible con OpenAI) y tool use, conectado a los dos MCP. Empezar con herramientas simuladas para no bloquearse.
 - System prompt que **anuncia al usuario qué sabe hacer** (recomendar, comparar con libro y decir si vale la pena, abrir IMDb y Google Books).
 - Endpoint de streaming (SSE) registrado en `routes` de `server/src/app.ts` (`POST /api/chat`).
 - **LLM01:** filtrar la entrada, tratar lo que devuelven las herramientas como datos no confiables, no ejecutar instrucciones incrustadas.
@@ -88,7 +88,7 @@ Servidor, Docker, nginx, dominio `agichat.jhgo.online`, CI, backend base (`/heal
 
 | Key | Quién | Nota |
 |---|---|---|
-| OpenAI | Persona 4 (o quien tenga saldo) | API key de platform.openai.com, no la suscripción de ChatGPT |
+| LLM (Groq) | Persona 4 | API key de console.groq.com, free tier sin tarjeta |
 | TMDB | Persona 2 | Declarar: estudiantes del curso CC3116 de la UVG, uso no comercial |
 | Google Books | Persona 3 | Sin tarjeta de crédito. No activar la prueba gratuita de Cloud |
 

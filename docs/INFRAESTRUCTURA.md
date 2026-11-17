@@ -18,7 +18,7 @@ flowchart LR
         Env[(".env<br/>API keys")] -.-> Server
     end
 
-    Server --> OpenAI[(OpenAI)]
+    Server --> LLM[(Groq LLM)]
     Server --> TMDB[(TMDB)]
     Server --> Books[(Google Books)]
 ```
@@ -50,7 +50,7 @@ El TLS lo hacen Cloudflare y el nginx del host (certificado wildcard). Los conte
 
 | Secreto | Dónde vive | Quién la crea | Para qué |
 |---|---|---|---|
-| `OPENAI_API_KEY` | `.env` del servidor (y `.env` local de quien desarrolla el agente) | Un miembro del grupo. Es una **API key** de platform.openai.com (no la suscripción de ChatGPT) y normalmente requiere saldo prepagado | LLM del agente |
+| `LLM_API_KEY` | `.env` del servidor (y `.env` local de quien desarrolla el agente) | Un miembro del grupo. API key de Groq (console.groq.com), **free tier sin tarjeta**. `LLM_MODEL` y `LLM_BASE_URL` tienen defaults para Groq | LLM del agente |
 | `TMDB_API_KEY` | igual | Cualquiera: themoviedb.org → Settings → API. Declarar **estudiantes del curso CC3116 de la UVG, uso no comercial** | Películas y pósters |
 | `GOOGLE_BOOKS_API_KEY` | igual | Google Cloud Console → proyecto → habilitar Books API → credencial. **Sin tarjeta de crédito**: no activar la prueba gratuita de Cloud | Libros |
 
@@ -89,7 +89,7 @@ Pendientes de infraestructura:
 - Agregar un endpoint = registrarlo en `routes` de `createApp` con `routeKey("POST", "/api/chat")`. Todo lo de `/api/*` llega por el proxy, con CORS y rate limit ya aplicados. `/health` es solo de infraestructura.
 - Streaming (SSE): responder con `Content-Type: text/event-stream`; nginx ya tiene `proxy_buffering off` en `/api/`.
 - Leer keys con `loadConfig` / `requireKey` (`server/src/config.ts`); no usar `process.env` suelto.
-- Dependencias de runtime del servidor (`openai`, `@modelcontextprotocol/sdk`, `zod`…) van en `dependencies`; justificarlas en el PR.
+- Dependencias de runtime del servidor (`@modelcontextprotocol/sdk`, `zod`…) van en `dependencies`; justificarlas en el PR.
 
 ## Comandos útiles
 

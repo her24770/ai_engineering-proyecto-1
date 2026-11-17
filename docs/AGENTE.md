@@ -22,7 +22,7 @@ flowchart TD
     InGuard -->|"ok"| Loop
 
     subgraph Loop["agent.ts: bucle del orquestador (máx. 5 rondas)"]
-        LLM["LLM (openai.ts)<br/>system prompt + historial"] -->|"tool_calls"| Router{"¿Qué herramienta?"}
+        LLM["LLM (llm.ts, Groq)<br/>system prompt + historial"] -->|"tool_calls"| Router{"¿Qué herramienta?"}
         Router -->|"search_movie<br/>get_recommendations<br/>get_movie_details<br/>search_book"| MCP["mcpTools.ts<br/>cliente MCP"]
         MCP -->|"resultado envuelto en<br/>&lt;resultado_herramienta&gt;<br/>(dato no confiable)"| LLM
         Router -->|"open_url / show_poster"| Allow{"allowlist de dominios<br/>imdb.com, books.google.com,<br/>image.tmdb.org"}
@@ -116,6 +116,14 @@ Se recomienda devolver los datos en `structuredContent`; si no hay, el agente us
 
 | Variable | Default | Uso |
 |---|---|---|
-| `OPENAI_API_KEY` | — | Obligatoria para responder. Sin ella, `/api/chat` devuelve un evento `error` |
-| `OPENAI_MODEL` | `gpt-4o-mini` | Modelo |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Cualquier proveedor compatible con la API de OpenAI |
+| `LLM_API_KEY` | — | Obligatoria para responder. Sin ella, `/api/chat` devuelve un evento `error` |
+| `LLM_MODEL` | `openai/gpt-oss-120b` | Modelo |
+| `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Cualquier proveedor compatible con la API de OpenAI |
+
+### Por qué Groq
+
+- El enunciado prohíbe registrar tarjetas de crédito. La API de OpenAI requiere saldo prepagado (tarjeta); el free tier de Groq no.
+- Groq expone la misma API que OpenAI (Chat Completions con tool calling), así que el agente no depende del proveedor: cambiar a OpenAI u otro es solo cambiar las tres variables.
+- `gpt-oss-120b` maneja bien el tool calling y está en el free tier.
+
+Límites del free tier (consultar los exactos en la consola de Groq): del orden de 30 peticiones/min, 1000/día, ~8k tokens/min y ~200k tokens/día. Cada mensaje del usuario consume 2–3 llamadas al LLM (unos 3–5k tokens), lo que alcanza para la demo pero no para mucho tráfico simultáneo. Por eso `llm.ts` reintenta **una vez** ante un `429` (respetando `retry-after`, máximo 10 s) y ante un `400 tool_use_failed` (llamada a herramienta mal formada). Las evals deben correrse espaciadas para no agotar la cuota.

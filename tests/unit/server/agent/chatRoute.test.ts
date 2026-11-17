@@ -5,7 +5,7 @@ import { createApp, routeKey } from "../../../../server/src/app.ts";
 import { loadConfig } from "../../../../server/src/config.ts";
 import { createChatHandler } from "../../../../server/src/agent/chatRoute.ts";
 import type { SseEvent } from "../../../../server/src/agent/chatRoute.ts";
-import type { Llm } from "../../../../server/src/agent/openai.ts";
+import type { Llm } from "../../../../server/src/agent/llm.ts";
 
 let server: Server;
 let base: string;
@@ -54,7 +54,7 @@ describe("POST /api/chat", () => {
   it("envía un error genérico si el agente falla, sin detalles internos", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     await start(async () => {
-      throw new Error("Falta la variable de entorno OPENAI_API_KEY");
+      throw new Error("Falta la variable de entorno LLM_API_KEY");
     });
 
     const events = parseSse(
@@ -65,7 +65,7 @@ describe("POST /api/chat", () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe("error");
-    expect(JSON.stringify(events)).not.toContain("OPENAI_API_KEY");
+    expect(JSON.stringify(events)).not.toContain("LLM_API_KEY");
     spy.mockRestore();
   });
 

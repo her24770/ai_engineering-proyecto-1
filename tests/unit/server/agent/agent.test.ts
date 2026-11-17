@@ -7,7 +7,7 @@ import type {
   LlmMessage,
   LlmReply,
   ToolCall,
-} from "../../../../server/src/agent/openai.ts";
+} from "../../../../server/src/agent/llm.ts";
 import { CANARY } from "../../../../server/src/agent/systemPrompt.ts";
 
 function call(name: string, args: unknown, id = name): ToolCall {

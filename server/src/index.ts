@@ -6,7 +6,7 @@ import { createApp, routeKey } from "./app.ts";
 import { loadConfig } from "./config.ts";
 import { createChatHandler } from "./agent/chatRoute.ts";
 import { createMcpExecutor } from "./agent/mcpTools.ts";
-import { createOpenAiLlm } from "./agent/openai.ts";
+import { createLlm } from "./agent/llm.ts";
 
 /** Punto de entrada (stdio) de cada MCP server. Acordado con Personas 2 y 3. */
 const MCP_SERVERS = ["../mcp/tmdb/index.ts", "../mcp/books/index.ts"].map((path) =>
@@ -48,10 +48,10 @@ const clients = (await Promise.all(MCP_SERVERS.map(connectMcp))).filter(
   (client): client is Client => client !== null,
 );
 const tools = await createMcpExecutor(clients);
-const llm = createOpenAiLlm({
-  apiKey: config.openaiApiKey,
-  model: config.openaiModel,
-  baseUrl: config.openaiBaseUrl,
+const llm = createLlm({
+  apiKey: config.llmApiKey,
+  model: config.llmModel,
+  baseUrl: config.llmBaseUrl,
 });
 
 const server = createApp(config, {

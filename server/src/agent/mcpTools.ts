@@ -1,5 +1,5 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { ToolSpec } from "./openai.ts";
+import type { ToolSpec } from "./llm.ts";
 
 /** Lo que el agente necesita de "las herramientas", sin importar de dónde vengan. */
 export interface ToolExecutor {

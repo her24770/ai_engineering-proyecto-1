@@ -31,7 +31,7 @@ flowchart TD
 
     subgraph Backend["Servidor Node (server/src)"]
         AgentTransport -->|HTTP POST SSE| API["/api/chat\n(CORS + RateLimiter)"]
-        API --> Agent["Agente Orquestador\n(OpenAI + Guardrails LLM01/LLM07)"]
+        API --> Agent["Agente Orquestador\n(LLM vía Groq + Guardrails LLM01/LLM07)"]
     end
 
     subgraph MCP["Servidores MCP (server/mcp)"]
