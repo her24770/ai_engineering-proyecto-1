@@ -14,9 +14,11 @@ export default defineConfig({
       exclude: [
         "src/**/index.ts",
         "server/src/index.ts",
+        "server/mcp/**/index.ts",
+        "server/mcp/**/stdio.ts",
+        "server/mcp/contracts.ts",
         "src/types/**",
         "src/transport/ChatTransport.ts",
-        "server/mcp/contracts.ts"
       ],
       thresholds: {
         lines: 80,
