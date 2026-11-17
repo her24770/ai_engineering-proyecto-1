@@ -4,6 +4,8 @@ export interface ServerConfig {
   rateLimitMax: number;
   rateLimitWindowMs: number;
   openaiApiKey: string | undefined;
+  openaiModel: string;
+  openaiBaseUrl: string;
   tmdbApiKey: string | undefined;
   googleBooksApiKey: string | undefined;
 }
@@ -34,6 +36,8 @@ export function loadConfig(env: Env): ServerConfig {
     rateLimitMax: toPositiveInt(env.RATE_LIMIT_MAX, 30, "RATE_LIMIT_MAX"),
     rateLimitWindowMs: toPositiveInt(env.RATE_LIMIT_WINDOW_MS, 60_000, "RATE_LIMIT_WINDOW_MS"),
     openaiApiKey: env.OPENAI_API_KEY || undefined,
+    openaiModel: env.OPENAI_MODEL || "gpt-4o-mini",
+    openaiBaseUrl: (env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, ""),
     tmdbApiKey: env.TMDB_API_KEY || undefined,
     googleBooksApiKey: env.GOOGLE_BOOKS_API_KEY || undefined,
   };

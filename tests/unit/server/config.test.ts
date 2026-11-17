@@ -7,6 +7,17 @@ describe("loadConfig", () => {
     expect(config.allowedOrigins).toEqual([]);
     expect(config.rateLimitMax).toBe(30);
     expect(config.openaiApiKey).toBeUndefined();
+    expect(config.openaiModel).toBe("gpt-4o-mini");
+    expect(config.openaiBaseUrl).toBe("https://api.openai.com/v1");
+  });
+
+  it("permite cambiar el modelo y la URL base del LLM", () => {
+    const config = loadConfig({
+      OPENAI_MODEL: "otro-modelo",
+      OPENAI_BASE_URL: "https://proveedor.ejemplo/v1/",
+    });
+    expect(config.openaiModel).toBe("otro-modelo");
+    expect(config.openaiBaseUrl).toBe("https://proveedor.ejemplo/v1");
   });
 
   it("lee variables y separa los origenes permitidos", () => {
